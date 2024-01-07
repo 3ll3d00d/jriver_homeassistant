@@ -8,9 +8,9 @@ from decimal import Decimal
 import logging
 from typing import Any
 
-from components.sensor import SensorEntity
-from const import CONF_HOST
-from helpers.typing import StateType
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.const import CONF_HOST
+from homeassistant.helpers.typing import StateType
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
