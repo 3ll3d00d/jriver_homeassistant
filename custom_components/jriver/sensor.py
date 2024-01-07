@@ -3,17 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import date, datetime
-from decimal import Decimal
 import logging
 from typing import Any
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import CONF_HOST
-from homeassistant.helpers.typing import StateType
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_HOST
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DATA_COORDINATOR, DATA_ZONES, DOMAIN
@@ -41,19 +37,16 @@ async def async_setup_entry(
         )
 
 
-class _MixinMeta(type(MediaServerEntity), type(SensorEntity)):  # type: ignore[misc]
-    pass
-
-
-class JRiverActiveZoneSensor(SensorEntity, MediaServerEntity, metaclass=_MixinMeta):
+class JRiverActiveZoneSensor(MediaServerEntity, SensorEntity):
     """Exposes current active zone."""
 
     _attr_name = None
 
-    @property
-    def native_value(self) -> StateType | date | datetime | Decimal:
-        """Get the native value."""
-        return self.coordinator.data.get_active_zone_name()
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._attr_native_value = self.coordinator.data.get_active_zone_name()
+        self.async_write_ha_state()
 
     @property
     def extra_state_attributes(self) -> Mapping[str, Any]:

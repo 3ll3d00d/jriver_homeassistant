@@ -7,11 +7,11 @@ from collections.abc import Iterable
 import logging
 from typing import Any
 
-from homeassistant.const import CONF_HOST, STATE_OFF, STATE_ON
 from hamcws import KeyCommand, MediaServer, ViewMode
 
 from homeassistant.components.remote import RemoteEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -37,11 +37,7 @@ async def async_setup_entry(
     )
 
 
-class _MixinMeta(type(MediaServerEntity), type(RemoteEntity)):  # type: ignore[misc]
-    pass
-
-
-class JRiverRemote(MediaServerEntity, RemoteEntity, metaclass=_MixinMeta):
+class JRiverRemote(MediaServerEntity, RemoteEntity):
     """Control Media Center."""
 
     _attr_name = None
@@ -51,7 +47,7 @@ class JRiverRemote(MediaServerEntity, RemoteEntity, metaclass=_MixinMeta):
         coordinator: MediaServerUpdateCoordinator,
         media_server: MediaServer,
         name,
-        uid: str | None,
+        uid: str,
     ) -> None:
         """Initialize the MediaServer entity."""
         super().__init__(coordinator, uid, name)
@@ -62,8 +58,6 @@ class JRiverRemote(MediaServerEntity, RemoteEntity, metaclass=_MixinMeta):
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
         self._attr_is_on = self.coordinator.data.view_mode > ViewMode.NO_UI
-        # workaround for apparent multiple inheritance problem where overridden state (in ToggleEntity) is not called
-        self._attr_state = STATE_ON if self._attr_is_on else STATE_OFF
         self.async_write_ha_state()
 
     @cmd

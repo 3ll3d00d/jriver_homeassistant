@@ -7,21 +7,6 @@ import datetime as dt
 import logging
 from typing import TypeVar
 
-from .const import (
-    CONF_BROWSE_PATHS,
-    CONF_DEVICE_ZONES,
-    DATA_BROWSE_PATHS,
-    DATA_COORDINATOR,
-    DATA_MEDIA_SERVER,
-    DATA_REMOVE_STOP_LISTENER,
-    DATA_REMOVE_UPDATE_LISTENER,
-    DATA_ZONES,
-    DOMAIN,
-    MC_FIELD_TO_HA_MEDIACLASS,
-    MC_FIELD_TO_HA_MEDIATYPE,
-)
-from homeassistant.components.media_player import MediaClass, MediaType
-from homeassistant.exceptions import ConfigEntryAuthFailed
 from hamcws import (
     CannotConnectError,
     InvalidAuthError,
@@ -36,8 +21,8 @@ from hamcws import (
     Zone,
     get_mcws_connection,
 )
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from homeassistant.components.media_player import MediaClass, MediaType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
@@ -49,8 +34,24 @@ from homeassistant.const import (
     Platform,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 import homeassistant.util.dt as dt_util
+
+from .const import (
+    CONF_BROWSE_PATHS,
+    CONF_DEVICE_ZONES,
+    DATA_BROWSE_PATHS,
+    DATA_COORDINATOR,
+    DATA_MEDIA_SERVER,
+    DATA_REMOVE_STOP_LISTENER,
+    DATA_REMOVE_UPDATE_LISTENER,
+    DATA_ZONES,
+    DOMAIN,
+    MC_FIELD_TO_HA_MEDIACLASS,
+    MC_FIELD_TO_HA_MEDIATYPE,
+)
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.MEDIA_PLAYER, Platform.REMOTE, Platform.SENSOR]

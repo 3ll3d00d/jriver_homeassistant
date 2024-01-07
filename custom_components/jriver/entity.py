@@ -4,12 +4,14 @@ from functools import wraps
 import logging
 from typing import Any, Concatenate, ParamSpec, TypeVar
 
-from homeassistant.auth import InvalidAuthError
-from .const import DOMAIN
-from . import MediaServerUpdateCoordinator
 from hamcws import CannotConnectError
+
+from homeassistant.auth import InvalidAuthError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from . import MediaServerUpdateCoordinator
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,18 +24,19 @@ class MediaServerEntity(CoordinatorEntity[MediaServerUpdateCoordinator]):
     def __init__(
         self,
         coordinator: MediaServerUpdateCoordinator,
-        unique_id: str | None,
+        unique_id: str,
         name: str,
     ) -> None:
         """Initialize the entity."""
         super().__init__(coordinator)
 
         self._attr_unique_id = unique_id
+        info = coordinator.data.server_info
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, unique_id)},
             manufacturer="JRiver",
-            model=f"Media Server - {coordinator.data.server_info.platform}",
-            sw_version=coordinator.data.server_info.version,
+            model=f"Media Server - {info.platform if info else 'Unknown'}",
+            sw_version=info.version if info else None,
             name=name,
         )
 

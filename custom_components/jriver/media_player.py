@@ -170,25 +170,17 @@ async def async_setup_entry(
     coordinator = data[DATA_COORDINATOR]
     if zones:
         entities = [
-            JRiverMediaPlayerEntity(
+            JRiverMediaPlayer(
                 coordinator, ms, f"{name} - {z}", f"{unique_id}-{z}", browse_paths, z
             )
             for z in zones
         ]
     else:
-        entities = [
-            JRiverMediaPlayerEntity(coordinator, ms, name, unique_id, browse_paths)
-        ]
+        entities = [JRiverMediaPlayer(coordinator, ms, name, unique_id, browse_paths)]
     async_add_entities(entities)
 
 
-class _MixinMeta(type(MediaServerEntity), type(MediaPlayerEntity)):  # type: ignore[misc]
-    pass
-
-
-class JRiverMediaPlayerEntity(
-    MediaServerEntity, MediaPlayerEntity, metaclass=_MixinMeta
-):
+class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
     """Representation of a JRiver Media Server."""
 
     _attr_name = None
@@ -215,7 +207,7 @@ class JRiverMediaPlayerEntity(
         coordinator: MediaServerUpdateCoordinator,
         media_server: MediaServer,
         name,
-        uid: str | None,
+        uid: str,
         browse_paths: list[str],
         zone_name: str | None = None,
     ) -> None:
