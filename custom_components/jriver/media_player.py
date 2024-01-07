@@ -163,7 +163,7 @@ async def async_setup_entry(
 
     data = hass.data[DOMAIN][config_entry.entry_id]
     ms = data[DATA_MEDIA_SERVER]
-    name = f"{config_entry.data[CONF_HOST]} Player"
+    name = f"{config_entry.data[CONF_HOST]}"
     unique_id = f"{config_entry.unique_id or config_entry.entry_id}_player"
     zones = data[DATA_ZONES]
     browse_paths = data[DATA_BROWSE_PATHS]

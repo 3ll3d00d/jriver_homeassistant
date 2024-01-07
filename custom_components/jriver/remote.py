@@ -32,9 +32,7 @@ async def async_setup_entry(
     ms = data[DATA_MEDIA_SERVER]
     name = config_entry.data[CONF_HOST]
     unique_id = f"{config_entry.unique_id or config_entry.entry_id}_remote"
-    async_add_entities(
-        [JRiverRemote(data[DATA_COORDINATOR], ms, f"{name} - Remote", unique_id)]
-    )
+    async_add_entities([JRiverRemote(data[DATA_COORDINATOR], ms, name, unique_id)])
 
 
 class JRiverRemote(MediaServerEntity, RemoteEntity):
@@ -70,7 +68,7 @@ class JRiverRemote(MediaServerEntity, RemoteEntity):
         """Stop all playback and close the display."""
         await asyncio.gather(
             self._media_server.stop_all(),
-            self._media_server.send_mcc(22000, param=-2, block=True),
+            self._media_server.send_mcc(20007, param=0, block=True),
         )
 
     @cmd

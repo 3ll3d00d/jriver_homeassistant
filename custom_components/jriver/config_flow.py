@@ -7,7 +7,9 @@ from typing import Any
 from hamcws import (
     CannotConnectError,
     InvalidAuthError,
+    InvalidRequestError,
     MediaServer,
+    MediaServerError,
     get_mcws_connection,
 )
 import voluptuous as vol
@@ -77,6 +79,10 @@ async def validate_http(hass: core.HomeAssistant, data) -> MediaServer:
         raise CannotConnect from error
     except InvalidAuthError as error:
         raise InvalidAuth from error
+    except InvalidRequestError as error:
+        raise InvalidRequest from error
+    except MediaServerError as error:
+        raise InternalError from error
     return ms
 
 
@@ -113,6 +119,10 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await self.async_step_credentials()
             except CannotConnect:
                 errors["base"] = "cannot_connect"
+            except TimeoutError:
+                errors["base"] = "timeout_connect"
+            except (InvalidRequest, InternalError):
+                errors["base"] = "unknown"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
@@ -362,3 +372,11 @@ class CannotConnect(exceptions.HomeAssistantError):
 
 class InvalidAuth(exceptions.HomeAssistantError):
     """Error to indicate there is invalid auth."""
+
+
+class InvalidRequest(exceptions.HomeAssistantError):
+    """Error to indicate an invalid request was made."""
+
+
+class InternalError(exceptions.HomeAssistantError):
+    """Error to indicate an invalid request was made."""
