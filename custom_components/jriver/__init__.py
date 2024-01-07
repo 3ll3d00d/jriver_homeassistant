@@ -7,7 +7,7 @@ import datetime as dt
 import logging
 from typing import TypeVar
 
-from components.jriver.const import (
+from .const import (
     CONF_BROWSE_PATHS,
     CONF_DEVICE_ZONES,
     DATA_BROWSE_PATHS,
@@ -20,8 +20,8 @@ from components.jriver.const import (
     MC_FIELD_TO_HA_MEDIACLASS,
     MC_FIELD_TO_HA_MEDIATYPE,
 )
-from components.media_player import MediaClass, MediaType
-from exceptions import ConfigEntryAuthFailed
+from homeassistant.components.media_player import MediaClass, MediaType
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from hamcws import (
     CannotConnectError,
     InvalidAuthError,
@@ -36,7 +36,7 @@ from hamcws import (
     Zone,
     get_mcws_connection,
 )
-from helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (

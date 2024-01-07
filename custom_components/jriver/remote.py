@@ -7,7 +7,7 @@ from collections.abc import Iterable
 import logging
 from typing import Any
 
-from const import CONF_HOST, STATE_OFF, STATE_ON
+from homeassistant.const import CONF_HOST, STATE_OFF, STATE_ON
 from hamcws import KeyCommand, MediaServer, ViewMode
 
 from homeassistant.components.remote import RemoteEntity
