@@ -3,9 +3,11 @@
   "name": "JRiver Media Center",
   "codeowners": ["@3ll3d00d"],
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/jriver",
+  "documentation": "https://github.com/3ll3d00d/jriver_homeassistant/",
   "homekit": {},
   "iot_class": "local_polling",
   "loggers": ["hamcws"],
-  "requirements": ["hamcws==0.0.39"]
+  "requirements": ["hamcws==0.0.39"],
+  "version": "0.0.1",
+  "issue_tracker": "https://github.com/3ll3d00d/jriver_homeassistant/issues"
 }
