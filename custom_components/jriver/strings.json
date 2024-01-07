@@ -1,0 +1,105 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "description": "JRiver Media Server connection information. Please make sure \"Use Media Network to share this library and enable DLNA\" is enabled in Options > Media Network.",
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "port": "[%key:common::config_flow::data::port%]",
+          "ssl": "[%key:common::config_flow::data::ssl%]"
+        },
+        "data_description": {
+          "host": "The hostname or IP address of the system hosting your JRiver Media Server."
+        }
+      },
+      "credentials": {
+        "description": "Please enter your JRiver Media Server user name and password. These can be found in Options > Media Network > Authentication",
+        "data": {
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]"
+        }
+      },
+      "paths": {
+        "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced.",
+        "data": {
+          "browse_paths": "View Paths"
+        }
+      },
+      "zones": {
+        "description": "Choose whether to expose zones as separate devices. ",
+        "data": {
+          "per_zone": "Show zones as separate devices"
+        }
+      },
+      "select_zones": {
+        "description": "Choose which zones to expose as a device",
+        "data": {
+          "zone_names": "Zones"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "no_paths": "No view paths provided",
+      "invalid_paths": "Path format is incorrect.",
+      "no_zones": "Must select at least one zone."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]"
+    }
+  },
+  "services": {
+    "add_to_playlist": {
+      "name": "Add to playlist",
+      "description": "Adds library items to the Playing Now playlist. Must provide either a query or a playlist. ",
+      "fields": {
+        "query": {
+          "name": "Search Query",
+          "description": "A JRiver search expression as per https://wiki.jriver.com/index.php/Search_Language"
+        },
+        "playlist_path": {
+          "name": "Playlist Path",
+          "description": "A path to a playlist to play."
+        }
+      }
+    },
+    "activate_zone": {
+      "name": "Set Active Zone",
+      "description": "Sets the active zone. ",
+      "fields": {
+        "zone_name": {
+          "name": "Zone Name",
+          "description": "A JRiver zone name"
+        }
+      }
+    },
+    "send_mcc": {
+      "name": "Send MCC command",
+      "description": "Sends an MCC command. ",
+      "fields": {
+        "command": {
+          "name": "MCC command id",
+          "description": "An MCC command"
+        },
+        "parameter": {
+          "name": "Parameter to an MCC command",
+          "description": "Optional parameter"
+        },
+        "block": {
+          "name": "Controls whether the call is blocking",
+          "description": "true to block, false to return immediately"
+        },
+        "zone_name": {
+          "name": "Target zone name",
+          "description": "A Media Server zone"
+        }
+      }
+    }
+  }
+}

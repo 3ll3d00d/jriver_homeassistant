@@ -1,0 +1,54 @@
+# Describes the format for available jriver services
+
+add_to_playlist:
+  target:
+    entity:
+      integration: jriver
+      domain: media_player
+  fields:
+    query:
+      example: "[Album Artist (auto)]=[AIR] ~sort=[Date],[Album],[Track #]"
+      selector:
+        text:
+    playlist_path:
+      example: Alarms\Morning\Wakeup
+      selector:
+        text:
+
+activate_zone:
+  target:
+    entity:
+      integration: jriver
+      domain: media_player
+  fields:
+    zone_name:
+      required: true
+      example: Player
+      selector:
+        text:
+
+send_mcc:
+  target:
+    entity:
+      integration: jriver
+      domain: media_player
+  fields:
+    command:
+      required: true
+      example: 22000
+      selector:
+        number:
+          min: 10000
+          max: 40000
+    parameter:
+      example: 2
+      selector:
+        number:
+    block:
+      default: true
+      selector:
+        boolean:
+    zone_name:
+      example: Player
+      selector:
+        text:

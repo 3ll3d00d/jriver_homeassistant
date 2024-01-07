@@ -1,0 +1,105 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Device is already configured",
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "invalid_paths": "Path format is incorrect.",
+            "no_paths": "No view paths provided",
+            "no_zones": "Must select at least one zone.",
+            "unknown": "Unexpected error"
+        },
+        "flow_title": "{name}",
+        "step": {
+            "credentials": {
+                "data": {
+                    "password": "Password",
+                    "username": "Username"
+                },
+                "description": "Please enter your JRiver Media Server user name and password. These can be found in Options > Media Network > Authentication"
+            },
+            "paths": {
+                "data": {
+                    "browse_paths": "View Paths"
+                },
+                "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced."
+            },
+            "select_zones": {
+                "data": {
+                    "zone_names": "Zones"
+                },
+                "description": "Choose which zones to expose as a device"
+            },
+            "user": {
+                "data": {
+                    "host": "Host",
+                    "port": "Port",
+                    "ssl": "Uses an SSL certificate"
+                },
+                "data_description": {
+                    "host": "The hostname or IP address of the system hosting your JRiver Media Server."
+                },
+                "description": "JRiver Media Server connection information. Please make sure \"Use Media Network to share this library and enable DLNA\" is enabled in Options > Media Network."
+            },
+            "zones": {
+                "data": {
+                    "per_zone": "Show zones as separate devices"
+                },
+                "description": "Choose whether to expose zones as separate devices. "
+            }
+        }
+    },
+    "services": {
+        "activate_zone": {
+            "description": "Sets the active zone. ",
+            "fields": {
+                "zone_name": {
+                    "description": "A JRiver zone name",
+                    "name": "Zone Name"
+                }
+            },
+            "name": "Set Active Zone"
+        },
+        "add_to_playlist": {
+            "description": "Adds library items to the Playing Now playlist. Must provide either a query or a playlist. ",
+            "fields": {
+                "playlist_path": {
+                    "description": "A path to a playlist to play.",
+                    "name": "Playlist Path"
+                },
+                "query": {
+                    "description": "A JRiver search expression as per https://wiki.jriver.com/index.php/Search_Language",
+                    "name": "Search Query"
+                }
+            },
+            "name": "Add to playlist"
+        },
+        "send_mcc": {
+            "description": "Sends an MCC command. ",
+            "fields": {
+                "block": {
+                    "description": "true to block, false to return immediately",
+                    "name": "Controls whether the call is blocking"
+                },
+                "command": {
+                    "description": "An MCC command",
+                    "name": "MCC command id"
+                },
+                "parameter": {
+                    "description": "Optional parameter",
+                    "name": "Parameter to an MCC command"
+                },
+                "zone_name": {
+                    "description": "A Media Server zone",
+                    "name": "Target zone name"
+                }
+            },
+            "name": "Send MCC command"
+        }
+    }
+}

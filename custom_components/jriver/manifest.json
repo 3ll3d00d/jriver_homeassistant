@@ -1,0 +1,12 @@
+{
+  "domain": "jriver",
+  "name": "JRiver Media Center",
+  "codeowners": ["@3ll3d00d"],
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/jriver",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "loggers": ["hamcws"],
+  "requirements": ["hamcws==0.0.39"],
+  "version": "0.0.1"
+}
