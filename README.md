@@ -2,8 +2,6 @@
 
 Home Assistant integration for interacting with your JRiver Media Center.
 
-This integration 
-
 ## Installation
 
 ### Automated installation through HACS
