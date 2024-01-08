@@ -71,7 +71,8 @@ There are 2 modes of integration
 If the "device per zone" option is chosen, the zones to include as devices can also be configured.
 
 ![SingleOrMulti](img/config_4.png?raw=true)
-![Zone Selection](img/config_4.png?raw=true "Zone Selection")
+
+![Zone Selection](img/config_5.png?raw=true "Zone Selection")
 
 ## Options
 
