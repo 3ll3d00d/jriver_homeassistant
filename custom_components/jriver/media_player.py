@@ -453,6 +453,19 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
 
         media_type_lower = media_type.lower()
 
+        async def _play_jriver_item():
+            if media_id[:2] == "N|":
+                await self.async_clear_playlist()
+                _, node_id, _ = media_id.split("|", 3)
+                await self._media_server.play_browse_files(
+                    int(node_id), zone=self._target_zone
+                )
+            elif media_id[:2] == "K|":
+                await self.async_clear_playlist()
+                await self._media_server.play_item(media_id[2:], zone=self._target_zone)
+            else:
+                raise ValueError(f"Unknown media id {media_id}")
+
         if media_type_lower == MediaType.PLAYLIST:
             await self._media_server.play_playlist(media_id, zone=self._target_zone)
         elif media_type_lower == "file":
@@ -460,26 +473,30 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         elif media_type_lower in [
             MediaType.ARTIST,
             MediaType.ALBUM,
-            MediaType.TRACK,
-            MediaType.MOVIE,
+            MediaType.CHANNEL,
+            MediaType.COMPOSER,
             MediaType.EPISODE,
+            MediaType.GENRE,
+            MediaType.IMAGE,
+            MediaType.MOVIE,
+            MediaType.MUSIC,
             MediaType.SEASON,
+            MediaType.TRACK,
             MediaType.TVSHOW,
+            MediaType.VIDEO,
         ]:
-            await self.async_clear_playlist()
-            if media_id[:2] == "N|":
-                _, node_id, _ = media_id.split("|", 3)
-                await self._media_server.play_browse_files(
-                    int(node_id), zone=self._target_zone
-                )
-            elif media_id[:2] == "K|":
-                await self._media_server.play_item(media_id[2:], zone=self._target_zone)
-            else:
-                raise ValueError(f"Unknown media id {media_id}")
+            await _play_jriver_item()
         else:
             media_id = async_process_play_media_url(self.hass, media_id)
-
-            await self._media_server.play_file(media_id, zone=self._target_zone)
+            if media_id[:2] in ["K|", "N|"]:
+                _LOGGER.debug(
+                    "Unexpected media type %s for MC provided media_id %s",
+                    media_type_lower,
+                    media_id,
+                )
+                await _play_jriver_item()
+            else:
+                await self._media_server.play_file(media_id, zone=self._target_zone)
 
     @cmd
     async def async_set_shuffle(self, shuffle: bool) -> None:
