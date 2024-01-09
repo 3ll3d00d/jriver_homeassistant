@@ -19,7 +19,7 @@ activate_zone:
   target:
     entity:
       integration: jriver
-      domain: media_player
+      domain: remote
   fields:
     zone_name:
       required: true
@@ -31,7 +31,7 @@ send_mcc:
   target:
     entity:
       integration: jriver
-      domain: media_player
+      domain: remote
   fields:
     command:
       required: true

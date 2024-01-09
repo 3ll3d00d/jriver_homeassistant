@@ -1,6 +1,7 @@
 """Support for interfacing with the JRiver MCWS API."""
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import logging
 from typing import Any
@@ -82,32 +83,6 @@ MC_ADD_MEDIA_SCHEMA = {
 }
 
 
-SERVICE_ACTIVATE_ZONE = "activate_zone"
-
-ATTR_ZONE_NAME = "zone_name"
-
-MC_ACTIVATE_ZONE_SCHEMA = {
-    vol.Required(ATTR_ZONE_NAME): cv.string,
-}
-
-
-SERVICE_SEND_MCC = "send_mcc"
-
-ATTR_MCC_COMMAND = "command"
-ATTR_MCC_PARAMETER = "parameter"
-ATTR_MCC_BLOCK = "block"
-ATTR_ZONE_NAME = "zone_name"
-
-MC_SEND_MCC_SCHEMA = {
-    vol.Required(ATTR_MCC_COMMAND): vol.All(
-        vol.Coerce(int), vol.Range(min=10000, max=40000)
-    ),
-    vol.Optional(ATTR_MCC_PARAMETER): vol.Coerce(int),
-    vol.Optional(ATTR_MCC_BLOCK): cv.boolean,
-    vol.Optional(ATTR_ZONE_NAME): cv.string,
-}
-
-
 def find_matching_config_entries_for_host(hass, host):
     """Search existing config entries for one matching the host."""
     for entry in hass.config_entries.async_entries(DOMAIN):
@@ -154,12 +129,6 @@ async def async_setup_entry(
     platform.async_register_entity_service(
         SERVICE_ADD_MEDIA, MC_ADD_MEDIA_SCHEMA, "async_add_media_to_playlist"
     )
-    platform.async_register_entity_service(
-        SERVICE_ACTIVATE_ZONE, MC_ACTIVATE_ZONE_SCHEMA, "async_activate_zone"
-    )
-    platform.async_register_entity_service(
-        SERVICE_SEND_MCC, MC_SEND_MCC_SCHEMA, "async_send_mcc"
-    )
 
     data = hass.data[DOMAIN][config_entry.entry_id]
     ms = data[DATA_MEDIA_SERVER]
@@ -192,6 +161,8 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         | MediaPlayerEntityFeature.VOLUME_MUTE
         | MediaPlayerEntityFeature.PREVIOUS_TRACK
         | MediaPlayerEntityFeature.NEXT_TRACK
+        | MediaPlayerEntityFeature.TURN_ON
+        | MediaPlayerEntityFeature.TURN_OFF
         | MediaPlayerEntityFeature.PLAY_MEDIA
         | MediaPlayerEntityFeature.VOLUME_STEP
         | MediaPlayerEntityFeature.STOP
@@ -529,24 +500,6 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
             "Service add_to_playlist requires either query or playlist_path to be set"
         )
 
-    @cmd
-    async def async_activate_zone(self, zone_name: str):
-        """Activate the named zone."""
-        await self._media_server.set_active_zone(zone_name)
-
-    @cmd
-    async def async_send_mcc(
-        self,
-        command: int,
-        parameter: int | None = None,
-        block: bool = True,
-        zone_name: str | None = None,
-    ):
-        """Send an MCC command."""
-        await self._media_server.send_mcc(
-            command, param=parameter, block=block, zone=zone_name
-        )
-
     async def async_browse_media(
         self,
         media_content_type: MediaType | str | None = None,
@@ -577,3 +530,14 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
             if has_mc_nodes:
                 return card
         raise BrowseError(f"Media not found: {media_content_type} / {media_content_id}")
+
+    async def async_turn_on(self) -> None:
+        """Show the standard view."""
+        await self._media_server.send_mcc(22009, param=0, block=True)
+
+    async def async_turn_off(self) -> None:
+        """Stop all playback and close the display."""
+        await asyncio.gather(
+            self._media_server.stop_all(),
+            self._media_server.send_mcc(20007, param=0, block=True),
+        )

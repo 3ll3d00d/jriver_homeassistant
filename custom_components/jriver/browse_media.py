@@ -24,7 +24,7 @@ class UnknownMediaType(BrowseError):
 
 def media_source_content_filter(item: BrowseMedia) -> bool:
     """Content filter for media sources."""
-    # Filter out cameras using PNG over MJPEG. They don't work in Kodi.
+    # MK media-source
     return not (
         item.media_content_id.startswith("media-source://camera/")
         and item.media_content_type == "image/png"
