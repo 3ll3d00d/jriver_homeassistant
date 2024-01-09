@@ -80,15 +80,69 @@ The Configure option allows for reconfiguration of the browse paths at any time.
 
 ### Media Player
 
-Coming soon
+The [media player](https://www.home-assistant.io/integrations/media_player/) supports all [listed features](https://www.home-assistant.io/integrations/media_player/#media-control-services) excluding the following:
+
+* select_source
+* select_sound_mode
+* join
+* unjoin
+
+Browsing is supported and provides access to
+
+* any Media Center [remote view](https://wiki.jriver.com/index.php/Customize_Views_for_Gizmo,_WebRemote,_and_DLNA) specified in the [#BrowsePaths] configuration
+* any Home Assistant [media source](https://www.home-assistant.io/integrations/media_source/) that is exposed as a URL 
+
+`turn_on` and `turn_off` services function as per the equivalent [#Remote Control] services. 
+
+If the "expose each zone as a separate device" option is selected then a separate media player entity is created for each zone to allow for direct control over that specified zone.
 
 ### Remote Control
 
-Coming soon
+A single [Remote](https://www.home-assistant.io/integrations/remote/) entity is registered which maps the [remote.send_command](https://www.home-assistant.io/integrations/remote/) service to `MCWS/v1/Control/Key`.
+
+Each service call can accept a list of values. A value that matches one of the mentioned "special keys" is sent as is, other values are treated as individual key presses.  
 
 ### Sensor
 
-Coming soon
+A single [Sensor](https://www.home-assistant.io/integrations/sensor) entity is registered which exposes the currently active zone as its state. This is accompanied by the zone id which is exposed as an attribute.
+
+### Additional Services
+
+A number of additional services are provided.
+
+#### jriver.add_to_playlist
+
+Targets the `media_player` entity.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.add_to_playlist)
+
+Accepts one of two parameters:
+
+* query: a valid search expression
+* playlist_path
+
+#### jriver.activate_zone
+
+Targets the `remote` entity.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.activate_zone)
+
+Accepts a single parameter
+
+* zone_name
+
+#### jriver.send_mcc
+
+Targets the `remote` entity.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.activate_zone)
+
+Exposes MCWS/v1/Control/MCC as a service and accepts the same parameters,i.e. 
+
+* command
+* parameter
+* block
+* zone_name
 
 # Dev
 
