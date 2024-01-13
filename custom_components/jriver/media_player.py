@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 import datetime as dt
 import logging
 from typing import Any
@@ -44,6 +45,7 @@ from .const import (
     CONF_DEVICE_ZONES,
     DATA_BROWSE_PATHS,
     DATA_COORDINATOR,
+    DATA_EXTRA_FIELDS,
     DATA_MEDIA_SERVER,
     DATA_SERVER_NAME,
     DATA_ZONES,
@@ -156,16 +158,27 @@ async def async_setup_entry(
     unique_id = f"{config_entry.unique_id or config_entry.entry_id}_player"
     zones = data[DATA_ZONES]
     browse_paths = data[DATA_BROWSE_PATHS]
+    extra_fields = data[DATA_EXTRA_FIELDS]
     coordinator = data[DATA_COORDINATOR]
     if zones:
         entities = [
             JRiverMediaPlayer(
-                coordinator, ms, f"{name} - {z}", f"{unique_id}-{z}", browse_paths, z
+                coordinator,
+                ms,
+                f"{name} - {z}",
+                f"{unique_id}-{z}",
+                browse_paths,
+                extra_fields,
+                zone_name=z,
             )
             for z in zones
         ]
     else:
-        entities = [JRiverMediaPlayer(coordinator, ms, name, unique_id, browse_paths)]
+        entities = [
+            JRiverMediaPlayer(
+                coordinator, ms, name, unique_id, browse_paths, extra_fields
+            )
+        ]
     async_add_entities(entities)
 
 
@@ -200,6 +213,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         name,
         uid: str,
         browse_paths: list[str],
+        extra_fields: list[str],
         zone_name: str | None = None,
     ) -> None:
         """Initialize the MediaServer entity."""
@@ -208,6 +222,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         self._playback_info: PlaybackInfo | None = None
         self._position_updated_at: dt.datetime | None = None
         self._browse_paths = [BrowsePath(bp) for bp in browse_paths]
+        self._extra_fields = extra_fields
         self._target_zone: str | None = zone_name
 
     def _reset_state(self):
@@ -233,6 +248,14 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
             return MediaPlayerState.PAUSED
 
         return MediaPlayerState.PLAYING
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Expose the extra fields, if any, as state attributes."""
+        if not self._playback_info:
+            return None
+
+        return self._playback_info.extra_fields
 
     @callback
     def _handle_coordinator_update(self) -> None:
