@@ -11,14 +11,23 @@ from hamcws import KeyCommand, MediaServer, ViewMode
 import voluptuous as vol
 
 from homeassistant.components.remote import RemoteEntity
+from homeassistant.components.wake_on_lan import (
+    DOMAIN as WOL_DOMAIN,
+    SERVICE_SEND_MAGIC_PACKET,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import MediaServerUpdateCoordinator
-from .const import DATA_COORDINATOR, DATA_MEDIA_SERVER, DOMAIN
+from .const import (
+    DATA_COORDINATOR,
+    DATA_MAC_ADDRESSES,
+    DATA_MEDIA_SERVER,
+    DATA_SERVER_NAME,
+    DOMAIN,
+)
 from .entity import MediaServerEntity, cmd
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,6 +58,8 @@ MC_SEND_MCC_SCHEMA = {
     vol.Optional(ATTR_ZONE_NAME): cv.string,
 }
 
+SERVICE_WAKE = "wake"
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -67,9 +78,16 @@ async def async_setup_entry(
 
     data = hass.data[DOMAIN][config_entry.entry_id]
     ms = data[DATA_MEDIA_SERVER]
-    name = config_entry.data[CONF_HOST]
+    name = data[DATA_SERVER_NAME]
+    mac_addresses = data[DATA_MAC_ADDRESSES]
+
+    if mac_addresses:
+        platform.async_register_entity_service(SERVICE_WAKE, {}, "async_send_wol")
+
     unique_id = f"{config_entry.unique_id or config_entry.entry_id}_remote"
-    async_add_entities([JRiverRemote(data[DATA_COORDINATOR], ms, name, unique_id)])
+    async_add_entities(
+        [JRiverRemote(data[DATA_COORDINATOR], ms, name, unique_id, mac_addresses, hass)]
+    )
 
 
 class JRiverRemote(MediaServerEntity, RemoteEntity):
@@ -83,12 +101,16 @@ class JRiverRemote(MediaServerEntity, RemoteEntity):
         media_server: MediaServer,
         name,
         uid: str,
+        mac_addresses: list[str],
+        hass: HomeAssistant,
     ) -> None:
         """Initialize the MediaServer entity."""
         super().__init__(coordinator, uid, name)
         self._media_server: MediaServer = media_server
         self._key_command_names = [e.name for e in KeyCommand]
         self._key_command_values = [e.value for e in KeyCommand]
+        self._mac_addresses = mac_addresses
+        self._hass = hass
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -139,3 +161,19 @@ class JRiverRemote(MediaServerEntity, RemoteEntity):
         await self._media_server.send_mcc(
             command, param=parameter, block=block, zone=zone_name
         )
+
+    @cmd
+    async def async_send_wol(self):
+        """Send WOL packet to each MAC address."""
+
+        if self._mac_addresses and self._hass.services.has_service(
+            WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET
+        ):
+            await asyncio.gather(
+                *[
+                    self._hass.services.async_call(
+                        WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET, service_data={"mac": mac}
+                    )
+                    for mac in self._mac_addresses
+                ]
+            )

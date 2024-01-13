@@ -26,6 +26,8 @@ from homeassistant.components.media_player import MediaClass, MediaType
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_HOST,
+    CONF_MAC,
+    CONF_NAME,
     CONF_PASSWORD,
     CONF_PORT,
     CONF_SSL,
@@ -42,11 +44,15 @@ import homeassistant.util.dt as dt_util
 from .const import (
     CONF_BROWSE_PATHS,
     CONF_DEVICE_ZONES,
+    CONF_EXTRA_FIELDS,
     DATA_BROWSE_PATHS,
     DATA_COORDINATOR,
+    DATA_EXTRA_FIELDS,
+    DATA_MAC_ADDRESSES,
     DATA_MEDIA_SERVER,
     DATA_REMOVE_STOP_LISTENER,
     DATA_REMOVE_UPDATE_LISTENER,
+    DATA_SERVER_NAME,
     DATA_ZONES,
     DOMAIN,
     MC_FIELD_TO_HA_MEDIACLASS,
@@ -177,7 +183,12 @@ class MediaServerData:
 class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
     """Store MediaServer data."""
 
-    def __init__(self, hass: HomeAssistant, media_server: MediaServer) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        media_server: MediaServer,
+        extra_fields: list[str] | None,
+    ) -> None:
         """Initialize."""
         super().__init__(
             hass,
@@ -187,6 +198,7 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
         )
         self._media_server = media_server
         self.data = MediaServerData()
+        self._extra_fields = extra_fields
 
     async def _async_update_data(self) -> MediaServerData:
         """Fetch the latest status."""
@@ -199,7 +211,11 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
             zone_tasks: list[asyncio.Task]
             async with asyncio.TaskGroup() as tg:
                 zone_tasks = [
-                    tg.create_task(self._media_server.get_playback_info(zone))
+                    tg.create_task(
+                        self._media_server.get_playback_info(
+                            zone, extra_fields=self._extra_fields
+                        )
+                    )
                     for zone in zones
                 ]
 
@@ -239,7 +255,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     ms = MediaServer(conn)
 
-    coordinator = MediaServerUpdateCoordinator(hass, ms)
+    extra_fields: list[str] | None = (
+        entry.options[CONF_EXTRA_FIELDS]
+        if CONF_EXTRA_FIELDS in entry.options
+        else entry.data[CONF_EXTRA_FIELDS]
+    )
+
+    coordinator = MediaServerUpdateCoordinator(hass, ms, extra_fields)
     await coordinator.async_config_entry_first_refresh()
 
     async def _close(event):
@@ -261,6 +283,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DATA_ZONES: entry.data[CONF_DEVICE_ZONES],
         DATA_BROWSE_PATHS: browse_paths,
         DATA_COORDINATOR: coordinator,
+        DATA_SERVER_NAME: entry.data.get(CONF_NAME, ms.media_server_info.name),
+        DATA_EXTRA_FIELDS: extra_fields,
+        DATA_MAC_ADDRESSES: entry.data[CONF_MAC],
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

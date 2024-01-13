@@ -52,3 +52,9 @@ send_mcc:
       example: Player
       selector:
         text:
+
+wake:
+  target:
+    entity:
+      integration: jriver
+      domain: remote

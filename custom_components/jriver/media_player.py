@@ -22,6 +22,7 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
 from homeassistant.const import (
+    CONF_API_KEY,
     CONF_HOST,
     CONF_NAME,
     CONF_PASSWORD,
@@ -44,6 +45,7 @@ from .const import (
     DATA_BROWSE_PATHS,
     DATA_COORDINATOR,
     DATA_MEDIA_SERVER,
+    DATA_SERVER_NAME,
     DATA_ZONES,
     DEFAULT_DEVICE_PER_ZONE,
     DEFAULT_PORT,
@@ -83,12 +85,27 @@ MC_ADD_MEDIA_SCHEMA = {
 }
 
 
-def find_matching_config_entries_for_host(hass, host):
-    """Search existing config entries for one matching the host."""
+def find_matching_config_entries_for_key_value(hass, key, value):
+    """Search existing config entries for a match."""
     for entry in hass.config_entries.async_entries(DOMAIN):
-        if entry.data[CONF_HOST] == host:
+        if entry.data[key] == value:
             return entry
     return None
+
+
+def entry_exists(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Check the entry exists."""
+    access_key = config[CONF_API_KEY]
+    if access_key and find_matching_config_entries_for_key_value(
+        hass, CONF_API_KEY, access_key
+    ):
+        return True
+
+    host = config[CONF_HOST]
+    if host and find_matching_config_entries_for_key_value(hass, CONF_HOST, host):
+        return True
+
+    return False
 
 
 async def async_setup_platform(
@@ -98,12 +115,15 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the JRiver platform."""
-    host = config[CONF_HOST]
-    if find_matching_config_entries_for_host(hass, host):
+    if entry_exists(hass, config):
         return
 
+    access_key = config[CONF_API_KEY]
+    host = config[CONF_HOST]
+
     entry_data = {
-        CONF_NAME: config.get(CONF_NAME, host),
+        CONF_NAME: config.get(CONF_NAME, access_key or host),
+        CONF_API_KEY: access_key,
         CONF_HOST: host,
         CONF_PORT: config.get(CONF_PORT),
         CONF_USERNAME: config.get(CONF_USERNAME),
@@ -131,8 +151,8 @@ async def async_setup_entry(
     )
 
     data = hass.data[DOMAIN][config_entry.entry_id]
-    ms = data[DATA_MEDIA_SERVER]
-    name = f"{config_entry.data[CONF_HOST]}"
+    ms: MediaServer = data[DATA_MEDIA_SERVER]
+    name = data[DATA_SERVER_NAME]
     unique_id = f"{config_entry.unique_id or config_entry.entry_id}_player"
     zones = data[DATA_ZONES]
     browse_paths = data[DATA_BROWSE_PATHS]

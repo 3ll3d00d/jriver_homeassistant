@@ -8,13 +8,16 @@
         },
         "error": {
             "cannot_connect": "Failed to connect",
+            "invalid_access_key": "Unable to resolve Access Key",
             "invalid_auth": "Invalid authentication",
+            "invalid_mac": "Invalid MAC address, must be 6 pairs of hex digits separated by :",
             "invalid_paths": "Path format is incorrect.",
+            "no_macs": "Must provide at least one MAC address.",
             "no_paths": "No view paths provided",
             "no_zones": "Must select at least one zone.",
+            "timeout_connect": "Timeout establishing connection",
             "unknown": "Unexpected error"
         },
-        "flow_title": "{name}",
         "step": {
             "credentials": {
                 "data": {
@@ -23,34 +26,82 @@
                 },
                 "description": "Please enter your JRiver Media Server user name and password. These can be found in Options > Media Network > Authentication"
             },
+            "macs": {
+                "data": {
+                    "mac": "MAC address",
+                    "use_wol": "Uncheck to prevent provision of the remote.wake service."
+                },
+                "description": "Select the MAC addresses that should be used for wake on lan.\nRequires the Home Assistant Wake on LAN integration to be enabled."
+            },
             "paths": {
                 "data": {
                     "browse_paths": "View Paths"
                 },
                 "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced."
             },
+            "select_playback_fields": {
+                "data": {
+                    "extra_fields": "Field Name"
+                },
+                "description": "Specify additional library fields to expose as attributes on the playing now sensor(s)."
+            },
             "select_zones": {
                 "data": {
                     "zone_names": "Zones"
                 },
-                "description": "Choose which zones to expose as a device"
+                "description": "Choose which zones to expose as a device."
             },
             "user": {
                 "data": {
+                    "api_key": "API key",
                     "host": "Host",
+                    "name": "Name",
                     "port": "Port",
                     "ssl": "Uses an SSL certificate"
                 },
                 "data_description": {
-                    "host": "The hostname or IP address of the system hosting your JRiver Media Server."
+                    "api_key": "The access key shown in Options > Media Network.",
+                    "host": "The hostname or IP address of the system hosting your JRiver Media Server.",
+                    "name": "A memorable name for the server, will default to the hostname if discovered via an access key"
                 },
-                "description": "JRiver Media Server connection information. Please make sure \"Use Media Network to share this library and enable DLNA\" is enabled in Options > Media Network."
+                "description": "Enter an access key or host and port.\n\"Use Media Network to share this library and enable DLNA\" must be enabled in Options > Media Network."
             },
             "zones": {
                 "data": {
                     "per_zone": "Show zones as separate devices"
                 },
                 "description": "Choose whether to expose zones as separate devices. "
+            }
+        }
+    },
+    "options": {
+        "abort": {
+            "already_configured": "Device is already configured",
+            "cannot_connect": "Failed to connect",
+            "invalid_auth": "Invalid authentication",
+            "unknown": "Unexpected error"
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "invalid_access_key": "Unable to resolve Access Key",
+            "invalid_auth": "Invalid authentication",
+            "invalid_paths": "Path format is incorrect.",
+            "no_paths": "No view paths provided",
+            "timeout_connect": "Timeout establishing connection",
+            "unknown": "Unexpected error"
+        },
+        "step": {
+            "fields": {
+                "data": {
+                    "extra_fields": "Field Name"
+                },
+                "description": "Specify additional library fields to expose as attributes on the playing now sensor(s)."
+            },
+            "init": {
+                "data": {
+                    "browse_paths": "View Paths"
+                },
+                "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced."
             }
         }
     },
@@ -100,6 +151,10 @@
                 }
             },
             "name": "Send MCC command"
+        },
+        "wake": {
+            "description": "Sends a WOL magic packet. ",
+            "name": "Use Wake On Lan to wake the MediaServer"
         }
     }
 }
