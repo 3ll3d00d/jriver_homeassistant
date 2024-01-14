@@ -51,7 +51,6 @@ async def async_setup_entry(
             extra_fields,
         )
         for z in await ms.get_zones()
-        if not z.is_dlna
     ]
 
     async_add_entities(entities)

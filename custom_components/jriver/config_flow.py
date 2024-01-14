@@ -280,9 +280,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not self._browse_paths:
                 errors["base"] = "no_paths"
             else:
-                self._zone_names = [
-                    z.name for z in await self._ms.get_zones() if z.is_dlna is False
-                ]
+                self._zone_names = [z.name for z in await self._ms.get_zones()]
                 if len(self._zone_names) > 1:
                     return await self.async_step_zones()
                 return await self.async_step_select_playback_fields()
