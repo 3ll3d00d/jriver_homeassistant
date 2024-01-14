@@ -33,4 +33,4 @@ jobs:
         with:
           body: ${{ steps.changelog.outputs.changelog }}
           draft: false
-          prerelease: true
+          prerelease: false
