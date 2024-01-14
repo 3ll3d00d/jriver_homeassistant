@@ -106,7 +106,7 @@ async def validate_http(
 ) -> tuple[MediaServer, list[str]]:
     """Validate the user input allows us to connect over HTTP."""
 
-    access_key = data[CONF_API_KEY]
+    access_key = data.get(CONF_API_KEY, "")
     host = data[CONF_HOST]
     port = data[CONF_PORT]
     username = data.get(CONF_USERNAME)
@@ -163,9 +163,9 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     def __init__(self) -> None:
         """Initialize flow."""
-        self._access_key: str | None = None
+        self._access_key: str = ""
         self._host: str = ""
-        self._port: int | None = DEFAULT_PORT
+        self._port: int = DEFAULT_PORT
         self._friendly_name: str = ""
         self._mac_addresses: list[str] = []
         self._username: str | None = None
@@ -184,7 +184,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            self._access_key = user_input[CONF_API_KEY]
+            self._access_key = user_input.get(CONF_API_KEY, "")
             self._host = user_input.get(CONF_HOST, "")
             self._port = user_input[CONF_PORT]
             self._ssl = user_input[CONF_SSL]

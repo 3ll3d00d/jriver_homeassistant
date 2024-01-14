@@ -106,7 +106,7 @@ def find_matching_config_entries_for_key_value(hass, key, value):
 
 def entry_exists(hass: HomeAssistant, config: ConfigType) -> bool:
     """Check the entry exists."""
-    access_key = config[CONF_API_KEY]
+    access_key = config.get(CONF_API_KEY, "")
     if access_key and find_matching_config_entries_for_key_value(
         hass, CONF_API_KEY, access_key
     ):
@@ -129,8 +129,8 @@ async def async_setup_platform(
     if entry_exists(hass, config):
         return
 
-    access_key = config[CONF_API_KEY]
-    host = config[CONF_HOST]
+    access_key = config.get(CONF_API_KEY, "")
+    host = config.get(CONF_HOST, "")
 
     entry_data = {
         CONF_NAME: config.get(CONF_NAME, access_key or host),

@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "jriver_homeassistant"
+version = "0.0.5"
+description = "A custom Home Assistant integration for jriver"
+authors = ["3ll3d00d <mattkhan+jrha@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "http://github.com/3ll3d00d/jriver_homeassistant"
+repository = "http://github.com/3ll3d00d/jriver_homeassistant"
+include = [
+    "LICENSE",
+]
+
+[tool.poetry.dependencies]
+python = "~3.11"
+homeassistant = "*"
+hamcws = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-aiohttp = "*"
+pytest-cov = "*"
+pytest-homeassistant-custom-component = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
