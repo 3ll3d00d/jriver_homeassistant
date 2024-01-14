@@ -116,10 +116,20 @@ Targets the `media_player` entity.
 
 [![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.add_to_playlist)
 
-Accepts one of two parameters:
+Requires one of two parameters:
 
 * query: a valid search expression
 * playlist_path
+
+#### jriver.relative_seek
+
+Targets the `media_player` entity.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.seek_relative)
+
+Requires a single parameter:
+
+* seek_duration: an amount to seek by in seconds
 
 #### jriver.activate_zone
 
@@ -127,7 +137,7 @@ Targets the `remote` entity.
 
 [![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.activate_zone)
 
-Accepts a single parameter
+Requires a single parameter
 
 * zone_name
 
@@ -137,12 +147,24 @@ Targets the `remote` entity.
 
 [![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.activate_zone)
 
-Exposes MCWS/v1/Control/MCC as a service and accepts the same parameters,i.e. 
+Exposes MCWS/v1/Control/MCC as a service and accepts the same parameters, i.e. 
 
 * command
 * parameter
 * block
 * zone_name
+
+Minimally, command is required.
+
+#### jriver.wake
+
+Targets the `remote` entity.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.wake)
+
+Sends a WOL packet to the configured MAC addresses.
+
+Depends on [Wake on LAN](https://www.home-assistant.io/integrations/wake_on_lan/) being enabled and an access key used to connect to Media Server. 
 
 # Dev
 

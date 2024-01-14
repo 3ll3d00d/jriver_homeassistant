@@ -87,6 +87,15 @@ MC_ADD_MEDIA_SCHEMA = {
 }
 
 
+SERVICE_SEEK_RELATIVE = "seek_relative"
+
+ATTR_SEEK_DURATION = "seek_duration"
+
+MC_SEEK_RELATIVE_SCHEMA = {
+    vol.Required(ATTR_SEEK_DURATION): vol.Coerce(float),
+}
+
+
 def find_matching_config_entries_for_key_value(hass, key, value):
     """Search existing config entries for a match."""
     for entry in hass.config_entries.async_entries(DOMAIN):
@@ -150,6 +159,9 @@ async def async_setup_entry(
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
         SERVICE_ADD_MEDIA, MC_ADD_MEDIA_SCHEMA, "async_add_media_to_playlist"
+    )
+    platform.async_register_entity_service(
+        SERVICE_SEEK_RELATIVE, MC_SEEK_RELATIVE_SCHEMA, "async_seek_relative"
     )
 
     data = hass.data[DOMAIN][config_entry.entry_id]
@@ -255,7 +267,10 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         if not self._playback_info:
             return None
 
-        return self._playback_info.extra_fields
+        return {
+            "zone_name": self._playback_info.zone_name,
+            **self._playback_info.extra_fields,
+        }
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -541,6 +556,13 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
 
         _LOGGER.warning(
             "Service add_to_playlist requires either query or playlist_path to be set"
+        )
+
+    @cmd
+    async def async_seek_relative(self, seek_duration: float):
+        """Seek by the specified duration."""
+        await self._media_server.media_seek(
+            int(seek_duration * 1000), zone=self._target_zone
         )
 
     async def async_browse_media(

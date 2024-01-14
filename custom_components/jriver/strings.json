@@ -64,7 +64,7 @@
       "no_paths": "No view paths provided",
       "invalid_paths": "Path format is incorrect.",
       "no_zones": "Must select at least one zone.",
-      "no_macs": "Must provide at least one MAC address.",
+      "no_mac_addresses": "Must provide at least one MAC address or disable WOL support.",
       "invalid_mac": "Invalid MAC address, must be 6 pairs of hex digits separated by :"
     },
     "abort": {
@@ -87,6 +87,13 @@
         "data": {
           "extra_fields": "Field Name"
         }
+      },
+      "macs": {
+        "description": "Select the MAC addresses that should be used for wake on lan.\nRequires the Home Assistant Wake on LAN integration to be enabled.",
+        "data": {
+          "use_wol": "Enable remote.wake service.",
+          "mac": "MAC address"
+        }
       }
     },
     "error": {
@@ -96,7 +103,9 @@
       "timeout_connect": "[%key:common::config_flow::error::timeout_connect%]",
       "unknown": "[%key:common::config_flow::error::unknown%]",
       "no_paths": "No view paths provided",
-      "invalid_paths": "Path format is incorrect."
+      "invalid_paths": "Path format is incorrect.",
+      "no_mac_addresses": "Must provide at least one MAC address or disable WOL support.",
+      "invalid_mac": "Invalid MAC address, must be 6 pairs of hex digits separated by :"
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
@@ -127,6 +136,16 @@
         "zone_name": {
           "name": "Zone Name",
           "description": "A JRiver zone name"
+        }
+      }
+    },
+    "seek_relative": {
+      "name": "Relative position seek",
+      "description": "Move forward or backward by the specified amount in seconds. ",
+      "fields": {
+        "seek_duration": {
+          "name": "Seek amount",
+          "description": "Number of seconds to seek forwards or backwards."
         }
       }
     },

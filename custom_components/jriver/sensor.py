@@ -107,4 +107,8 @@ class JRiverPlayingNowSensor(MediaServerEntity, SensorEntity):
         info = self.coordinator.data.get_playback_info(self._zone_name)
         if not info:
             return {}
-        return info.as_dict()
+        return {
+            "is_active": self.coordinator.data.get_active_zone_name()
+            == self._zone_name,
+            **info.as_dict(),
+        }

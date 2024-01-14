@@ -276,6 +276,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if CONF_BROWSE_PATHS in entry.options
         else entry.data[CONF_BROWSE_PATHS]
     )
+    mac_addresses = (
+        entry.options[CONF_MAC] if CONF_MAC in entry.options else entry.data[CONF_MAC]
+    )
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_MEDIA_SERVER: ms,
         DATA_REMOVE_STOP_LISTENER: remove_stop_listener,
@@ -285,7 +288,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DATA_COORDINATOR: coordinator,
         DATA_SERVER_NAME: entry.data.get(CONF_NAME, ms.media_server_info.name),
         DATA_EXTRA_FIELDS: extra_fields,
-        DATA_MAC_ADDRESSES: entry.data[CONF_MAC],
+        DATA_MAC_ADDRESSES: mac_addresses,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

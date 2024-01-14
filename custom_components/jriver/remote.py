@@ -165,15 +165,22 @@ class JRiverRemote(MediaServerEntity, RemoteEntity):
     @cmd
     async def async_send_wol(self):
         """Send WOL packet to each MAC address."""
-
-        if self._mac_addresses and self._hass.services.has_service(
-            WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET
-        ):
-            await asyncio.gather(
-                *[
-                    self._hass.services.async_call(
-                        WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET, service_data={"mac": mac}
-                    )
-                    for mac in self._mac_addresses
-                ]
+        if not self._mac_addresses:
+            _LOGGER.debug("No MAC addresses available, unable to send WOL")
+            return
+        if not self._hass.services.has_service(WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET):
+            _LOGGER.warning(
+                "Service wake_on_lan not configured, unable to send WOL to %s",
+                str(self._mac_addresses),
             )
+            return
+
+        _LOGGER.debug("Sending WOL to %s", str(self._mac_addresses))
+        await asyncio.gather(
+            *[
+                self._hass.services.async_call(
+                    WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET, service_data={"mac": mac}
+                )
+                for mac in self._mac_addresses
+            ]
+        )

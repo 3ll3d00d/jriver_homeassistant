@@ -12,7 +12,7 @@
             "invalid_auth": "Invalid authentication",
             "invalid_mac": "Invalid MAC address, must be 6 pairs of hex digits separated by :",
             "invalid_paths": "Path format is incorrect.",
-            "no_macs": "Must provide at least one MAC address.",
+            "no_mac_addresses": "Must provide at least one MAC address or disable WOL support.",
             "no_paths": "No view paths provided",
             "no_zones": "Must select at least one zone.",
             "timeout_connect": "Timeout establishing connection",
@@ -85,7 +85,9 @@
             "cannot_connect": "Failed to connect",
             "invalid_access_key": "Unable to resolve Access Key",
             "invalid_auth": "Invalid authentication",
+            "invalid_mac": "Invalid MAC address, must be 6 pairs of hex digits separated by :",
             "invalid_paths": "Path format is incorrect.",
+            "no_mac_addresses": "Must provide at least one MAC address or disable WOL support.",
             "no_paths": "No view paths provided",
             "timeout_connect": "Timeout establishing connection",
             "unknown": "Unexpected error"
@@ -102,6 +104,13 @@
                     "browse_paths": "View Paths"
                 },
                 "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced."
+            },
+            "macs": {
+                "data": {
+                    "mac": "MAC address",
+                    "use_wol": "Enable remote.wake service."
+                },
+                "description": "Select the MAC addresses that should be used for wake on lan.\nRequires the Home Assistant Wake on LAN integration to be enabled."
             }
         }
     },
@@ -129,6 +138,16 @@
                 }
             },
             "name": "Add to playlist"
+        },
+        "seek_relative": {
+            "description": "Move forward or backward by the specified amount in seconds. ",
+            "fields": {
+                "seek_duration": {
+                    "description": "Number of seconds to seek forwards or backwards.",
+                    "name": "Seek amount"
+                }
+            },
+            "name": "Relative position seek"
         },
         "send_mcc": {
             "description": "Sends an MCC command. ",

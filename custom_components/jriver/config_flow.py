@@ -47,8 +47,6 @@ from .const import (
     CONF_DEVICE_ZONES,
     CONF_EXTRA_FIELDS,
     CONF_USE_WOL,
-    DATA_BROWSE_PATHS,
-    DATA_EXTRA_FIELDS,
     DEFAULT_BROWSE_PATHS,
     DEFAULT_DEVICE_PER_ZONE,
     DEFAULT_PORT,
@@ -515,8 +513,10 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
         self._library_fields: list[str] = []
-        self._browse_paths: list[str] = []
-        self._extra_fields: list[str] = []
+        self._browse_paths: list[str] = self._get_existing(CONF_BROWSE_PATHS, [])
+        self._extra_fields: list[str] = self._get_existing(CONF_EXTRA_FIELDS, [])
+        self._mac_addresses: list[str] = self._get_existing(CONF_MAC, [])
+        self._use_wol: bool = self._get_existing(CONF_USE_WOL, True)
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -526,7 +526,7 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             self._browse_paths = user_input.get(CONF_BROWSE_PATHS, [])
             if self._browse_paths:
-                return await self.async_step_fields()
+                return await self.async_step_macs()
             errors["base"] = "no_paths"
 
         return self.async_show_form(
@@ -535,9 +535,7 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(
                         CONF_BROWSE_PATHS,
-                        default=self.config_entry.options[DATA_BROWSE_PATHS]
-                        if DATA_BROWSE_PATHS in self.config_entry.options
-                        else self.config_entry.data[DATA_BROWSE_PATHS],
+                        default=self._browse_paths,
                     ): TextSelector(
                         TextSelectorConfig(
                             type=TextSelectorType.TEXT, multiline=True, multiple=True
@@ -589,9 +587,7 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
             {
                 vol.Required(
                     CONF_EXTRA_FIELDS,
-                    default=self.config_entry.options[DATA_EXTRA_FIELDS]
-                    if DATA_EXTRA_FIELDS in self.config_entry.options
-                    else self.config_entry.data[DATA_EXTRA_FIELDS],
+                    default=self._extra_fields,
                 ): SelectSelector(
                     SelectSelectorConfig(multiple=True, options=self._library_fields)
                 ),
@@ -600,14 +596,60 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
 
         return self.async_show_form(step_id="fields", data_schema=schema, errors=errors)
 
+    async def async_step_macs(self, user_input=None):
+        """Handle mac address input."""
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_USE_WOL, default=True): bool,
+                vol.Optional(
+                    CONF_MAC,
+                    default=self._mac_addresses,
+                ): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.TEXT, multiple=True)
+                ),
+            }
+        )
+
+        errors = {}
+        if user_input is not None:
+            macs = user_input[CONF_MAC]
+            use_wol = user_input[CONF_USE_WOL] is True
+            if not macs and use_wol:
+                errors["base"] = "no_mac_addresses"
+                return self.async_show_form(
+                    step_id="macs", data_schema=schema, errors=errors
+                )
+
+            self._mac_addresses = macs if use_wol else []
+            if any(_invalid_mac(m) for m in self._mac_addresses):
+                errors["base"] = "invalid_mac"
+                return self.async_show_form(
+                    step_id="macs", data_schema=schema, errors=errors
+                )
+
+            self._mac_addresses = [m.replace("-", ":") for m in macs]
+
+            return await self.async_step_fields()
+
+        return self.async_show_form(step_id="macs", data_schema=schema, errors=errors)
+
     @callback
     def _get_data(self):
         data = {
             CONF_BROWSE_PATHS: self._browse_paths,
             CONF_EXTRA_FIELDS: self._extra_fields,
+            CONF_MAC: self._mac_addresses,
+            CONF_USE_WOL: self._use_wol,
         }
 
         return data
+
+    def _get_existing(self, key: str, default_value: Any = None) -> Any:
+        if key in self.config_entry.options:
+            return self.config_entry.options[key]
+        if key in self.config_entry.data:
+            return self.config_entry.data[key]
+        return default_value
 
 
 class CannotConnect(exceptions.HomeAssistantError):
