@@ -558,12 +558,12 @@ async def test_reconfigure_options(
     )
     with (
         patch(
-            "homeassistant.components.jriver.MediaServerUpdateCoordinator._async_update_data",
+            "custom_components.jriver.MediaServerUpdateCoordinator._async_update_data",
             return_value=MediaServerData(server_info=MediaServerInfo({})),
         ),
-        patch("homeassistant.components.jriver.get_ms", return_value=media_server),
+        patch("custom_components.jriver.get_ms", return_value=media_server),
         patch(
-            "homeassistant.components.jriver.config_flow.JRiverOptionsFlowHandler._ensure_library_fields",
+            "custom_components.jriver.config_flow.JRiverOptionsFlowHandler._ensure_library_fields",
             return_value={},
         ),
     ):
