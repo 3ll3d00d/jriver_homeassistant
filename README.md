@@ -1,4 +1,4 @@
-# JRiver Media Center Integration 
+# JRiver Media Center Integration
 
 Home Assistant integration for interacting with your JRiver Media Center.
 
@@ -6,9 +6,9 @@ Home Assistant integration for interacting with your JRiver Media Center.
 
 ### Automated installation through HACS
 
-You can install this component through [HACS](https://hacs.xyz/) so make sure HACS is installed. 
+You can install this component through [HACS](https://hacs.xyz/) so make sure HACS is installed.
 
-Next, visit the HACS Integrations pane and go to *Custom Repositories* via the advanced menu (the 3 dots in the top right). Add `https://github.com/3ll3d00d/jriver_homeassistant.git` and set category to `Integration`.
+Next, visit the HACS Integrations pane and go to _Custom Repositories_ via the advanced menu (the 3 dots in the top right). Add `https://github.com/3ll3d00d/jriver_homeassistant.git` and set category to `Integration`.
 
 Finally, click this link to complete the installation.
 
@@ -52,8 +52,8 @@ A number of the views that are configured in MC out of the box are automatically
 
 The format of each entry is a pipe delimited pair of comma separated values. These 2 values are:
 
-* the list of path names
-* the list of categories (field names)
+- the list of path names
+- the list of categories (field names)
 
 The example illustrates, the path names are on the left and the category list is on the right. The complete text for this example would be `Audio,Artist|Album Artist (auto),Album`.
 
@@ -63,8 +63,8 @@ These screens are only shown if multiple zones are configured in Media Center.
 
 There are 2 modes of integration
 
-1) a single media player device for the entire Media Center, zone control is handled externally (i.e. either manually by the user or using [Zone Switch](https://wiki.jriver.com/index.php/Zones#ZoneSwitch))
-2) a device for each zone
+1. a single media player device for the entire Media Center, zone control is handled externally (i.e. either manually by the user or using [Zone Switch](https://wiki.jriver.com/index.php/Zones#ZoneSwitch))
+2. a device for each zone
 
 If the "device per zone" option is chosen, the zones to include as devices can also be configured.
 
@@ -82,17 +82,17 @@ The Configure option allows for reconfiguration of the browse paths at any time.
 
 The [media player](https://www.home-assistant.io/integrations/media_player/) supports all [listed features](https://www.home-assistant.io/integrations/media_player/#media-control-services) excluding the following:
 
-* select_source
-* select_sound_mode
-* join
-* unjoin
+- select_source
+- select_sound_mode
+- join
+- unjoin
 
 Browsing is supported and provides access to
 
-* any Media Center [remote view](https://wiki.jriver.com/index.php/Customize_Views_for_Gizmo,_WebRemote,_and_DLNA) specified in the [#BrowsePaths] configuration
-* any Home Assistant [media source](https://www.home-assistant.io/integrations/media_source/) that is exposed as a URL 
+- any Media Center [remote view](https://wiki.jriver.com/index.php/Customize_Views_for_Gizmo,_WebRemote,_and_DLNA) specified in the [#BrowsePaths] configuration
+- any Home Assistant [media source](https://www.home-assistant.io/integrations/media_source/) that is exposed as a URL
 
-`turn_on` and `turn_off` services function as per the equivalent [#Remote Control] services. 
+`turn_on` and `turn_off` services function as per the equivalent [#Remote Control] services.
 
 If the "expose each zone as a separate device" option is selected then a separate media player entity is created for each zone to allow for direct control over that specified zone.
 
@@ -100,7 +100,7 @@ If the "expose each zone as a separate device" option is selected then a separat
 
 A single [Remote](https://www.home-assistant.io/integrations/remote/) entity is registered which maps the [remote.send_command](https://www.home-assistant.io/integrations/remote/) service to `MCWS/v1/Control/Key`.
 
-Each service call can accept a list of values. A value that matches one of the mentioned "special keys" is sent as is, other values are treated as individual key presses.  
+Each service call can accept a list of values. A value that matches one of the mentioned "special keys" is sent as is, other values are treated as individual key presses.
 
 ### Sensor
 
@@ -118,8 +118,8 @@ Targets the `media_player` entity.
 
 Requires one of two parameters:
 
-* query: a valid search expression
-* playlist_path
+- query: a valid search expression
+- playlist_path
 
 #### jriver.relative_seek
 
@@ -129,7 +129,7 @@ Targets the `media_player` entity.
 
 Requires a single parameter:
 
-* seek_duration: an amount to seek by in seconds
+- seek_duration: an amount to seek by in seconds
 
 #### jriver.activate_zone
 
@@ -139,7 +139,7 @@ Targets the `remote` entity.
 
 Requires a single parameter
 
-* zone_name
+- zone_name
 
 #### jriver.send_mcc
 
@@ -147,12 +147,12 @@ Targets the `remote` entity.
 
 [![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.activate_zone)
 
-Exposes MCWS/v1/Control/MCC as a service and accepts the same parameters, i.e. 
+Exposes MCWS/v1/Control/MCC as a service and accepts the same parameters, i.e.
 
-* command
-* parameter
-* block
-* zone_name
+- command
+- parameter
+- block
+- zone_name
 
 Minimally, command is required.
 
@@ -164,7 +164,7 @@ Targets the `remote` entity.
 
 Sends a WOL packet to the configured MAC addresses.
 
-Depends on [Wake on LAN](https://www.home-assistant.io/integrations/wake_on_lan/) being enabled and an access key used to connect to Media Server. 
+Depends on [Wake on LAN](https://www.home-assistant.io/integrations/wake_on_lan/) being enabled and an access key used to connect to Media Server.
 
 # Dev
 
@@ -175,6 +175,6 @@ python -m venv dev-venv
 . dev-venv\Scripts\activate
 ```
 
-You can then install the dependencies that will allow you to develop: 
+You can then install the dependencies that will allow you to develop:
 
 `pip3 install -r requirements-dev.txt`

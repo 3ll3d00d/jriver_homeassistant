@@ -2,8 +2,8 @@
 from collections.abc import Generator
 from unittest.mock import AsyncMock, Mock, PropertyMock, patch
 
-from hamcws import MediaServer, MediaServerInfo
 import pytest
+from hamcws import MediaServer, MediaServerInfo
 
 
 @pytest.fixture(autouse=True)

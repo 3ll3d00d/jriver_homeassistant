@@ -2,13 +2,13 @@ name: test
 on:
   push:
     branches:
-      - '*'
+      - "*"
   pull_request:
     branches:
-      - '*'
+      - "*"
   workflow_dispatch:
     branches:
-      - '*'
+      - "*"
 defaults:
   run:
     shell: bash
