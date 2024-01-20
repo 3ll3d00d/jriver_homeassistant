@@ -244,16 +244,7 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up mcws from a config entry."""
-    conn = get_mcws_connection(
-        entry.data[CONF_HOST],
-        entry.data[CONF_PORT],
-        username=entry.data[CONF_USERNAME],
-        password=entry.data[CONF_PASSWORD],
-        ssl=entry.data[CONF_SSL],
-        session=async_get_clientsession(hass),
-    )
-
-    ms = MediaServer(conn)
+    ms = await get_ms(hass, entry)
 
     extra_fields: list[str] | None = (
         entry.options[CONF_EXTRA_FIELDS]
@@ -265,7 +256,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     async def _close(event):
-        await conn.close()
+        await ms.close()
 
     remove_stop_listener = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _close)
     remove_update_listener = entry.add_update_listener(reconfigure_entry)
@@ -296,6 +287,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
+async def get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
+    """Get a MediaServer instance."""
+    conn = get_mcws_connection(
+        entry.data[CONF_HOST],
+        entry.data[CONF_PORT],
+        username=entry.data[CONF_USERNAME],
+        password=entry.data[CONF_PASSWORD],
+        ssl=entry.data[CONF_SSL],
+        session=async_get_clientsession(hass),
+    )
+    ms = MediaServer(conn)
+    return ms
+
+
 async def reconfigure_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Handle options update."""
     await hass.config_entries.async_reload(entry.entry_id)
@@ -304,7 +309,7 @@ async def reconfigure_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
+    if unload_ok and DOMAIN in hass.data:
         data = hass.data[DOMAIN].pop(entry.entry_id)
         await data[DATA_MEDIA_SERVER].close()
         data[DATA_REMOVE_STOP_LISTENER]()

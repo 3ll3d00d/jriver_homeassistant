@@ -1,2 +1,3 @@
 homeassistant
 hamcws
+pytest-homeassistant-custom-component

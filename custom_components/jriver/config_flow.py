@@ -5,16 +5,14 @@ import logging
 import re
 from typing import Any
 
-from aiohttp import ClientSession
+import hamcws
 from hamcws import (
     CannotConnectError,
+    InvalidAccessKeyError,
     InvalidAuthError,
     InvalidRequestError,
     MediaServer,
     MediaServerError,
-    ServerAddress,
-    get_mcws_connection,
-    resolve_access_key,
 )
 import voluptuous as vol
 
@@ -65,95 +63,31 @@ def _invalid_mac(mac: str) -> bool:
     )
 
 
-async def try_connect(
-    host: str,
-    port: int,
-    username: str | None,
-    password: str | None,
-    session: ClientSession,
-    ssl: bool = False,
-    timeout: int = 5,
-) -> MediaServer:
-    """Try to connect to the given host/port."""
-    _LOGGER.debug("Connecting to %s:%s", host, port)
-    conn = get_mcws_connection(
-        host,
-        port,
-        username=username,
-        password=password,
-        ssl=ssl,
-        timeout=timeout,
-        session=session,
-    )
-    ms = MediaServer(conn)
-    try:
-        if not await ms.get_auth_token():
-            raise CannotConnect("Unexpected response")
-        await ms.alive()
-    except CannotConnectError as error:
-        raise CannotConnect from error
-    except InvalidAuthError as error:
-        raise InvalidAuth from error
-    except InvalidRequestError as error:
-        raise InvalidRequest from error
-    except MediaServerError as error:
-        raise InternalError from error
-    return ms
-
-
 async def validate_http(
     hass: core.HomeAssistant, data
 ) -> tuple[MediaServer, list[str]]:
     """Validate the user input allows us to connect over HTTP."""
-
-    access_key = data.get(CONF_API_KEY, "")
-    host = data[CONF_HOST]
-    port = data[CONF_PORT]
-    username = data.get(CONF_USERNAME)
-    password = data.get(CONF_PASSWORD)
-    timeout = data.get(CONF_TIMEOUT)
-    ssl = data.get(CONF_SSL)
-    session = async_get_clientsession(hass)
-
-    if access_key:
-        _LOGGER.debug("Looking up access key %s", access_key)
-        server_info: ServerAddress | None = await resolve_access_key(
-            access_key, session
+    try:
+        return await hamcws.load_media_server(
+            access_key=data.get(CONF_API_KEY, ""),
+            host=data.get(CONF_HOST, ""),
+            port=data[CONF_PORT],
+            username=data.get(CONF_USERNAME, None),
+            password=data.get(CONF_PASSWORD, None),
+            use_ssl=data.get(CONF_SSL, False),
+            session=async_get_clientsession(hass),
+            timeout=data.get(CONF_TIMEOUT, 5),
         )
-        if server_info:
-            for ip in server_info.local_ip_list:
-                try:
-                    ms = await try_connect(
-                        ip,
-                        server_info.https_port if ssl else server_info.http_port,
-                        username,
-                        password,
-                        session,
-                        ssl=ssl,
-                        timeout=timeout,
-                    )
-                except CannotConnectError:
-                    continue
-                except InvalidAuthError as error:
-                    raise InvalidAuth from error
-                except InvalidRequestError as error:
-                    raise InvalidRequest from error
-                except MediaServerError as error:
-                    raise InternalError from error
-                if ms:
-                    _LOGGER.debug(
-                        "Access key %s resolved to %s:%s",
-                        access_key,
-                        ip,
-                        server_info.port,
-                    )
-                    return ms, server_info.mac_address_list
-        else:
-            raise InvalidAccessKey()
-    ms = await try_connect(
-        host, port, username, password, session, ssl=ssl, timeout=timeout
-    )
-    return ms, []
+    except InvalidAuthError as error:
+        raise InvalidAuth from error
+    except CannotConnectError as error:
+        raise CannotConnect from error
+    except InvalidRequestError as error:
+        raise InvalidRequest from error
+    except MediaServerError as error:
+        raise InternalError from error
+    except InvalidAccessKeyError as error:
+        raise InvalidAccessKey from error
 
 
 class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -310,7 +244,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not self._device_zones:
                 errors["base"] = "no_zones"
             else:
-                return self._create_entry()
+                return await self.async_step_select_playback_fields()
 
         return self._show_select_zones_form(errors)
 
