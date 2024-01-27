@@ -42,20 +42,11 @@ MC_FIELD_TO_HA_MEDIATYPE: dict[str, str] = {
     "Images": "IMAGE",
     "Playlists": "PLAYLIST",
     "Shows": "TVSHOW",
+    "Series": "TVSHOW",
     "Genre": "GENRE",
     "Podcast": "PODCAST",
 }
 
 MC_FIELD_TO_HA_MEDIACLASS: dict[str, str] = {
-    "Audio": "MUSIC",
-    "Artist": "ARTIST",
-    "Album": "ALBUM",
-    "Album Artist (auto)": "ARTIST",
-    "Composer": "ARTIST",
-    "Video": "VIDEO",
-    "Images": "IMAGE",
-    "Playlists": "PLAYLIST",
-    "Shows": "TV_SHOW",
-    "Genre": "GENRE",
-    "Podcast": "PODCAST",
+    k: "TV_SHOW" if v == "TVSHOW" else v for k, v in MC_FIELD_TO_HA_MEDIATYPE.items()
 }

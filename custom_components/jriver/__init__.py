@@ -7,7 +7,9 @@ import datetime as dt
 import logging
 from typing import TypeVar
 
+from awesomeversion import AwesomeVersion
 from hamcws import (
+    BrowsePath,
     CannotConnectError,
     InvalidAuthError,
     InvalidRequestError,
@@ -19,6 +21,7 @@ from hamcws import (
     PlaybackInfo,
     ViewMode,
     Zone,
+    convert_browse_rules,
     get_mcws_connection,
 )
 
@@ -55,87 +58,10 @@ from .const import (
     DATA_SERVER_NAME,
     DATA_ZONES,
     DOMAIN,
-    MC_FIELD_TO_HA_MEDIACLASS,
-    MC_FIELD_TO_HA_MEDIATYPE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.MEDIA_PLAYER, Platform.REMOTE, Platform.SENSOR]
-
-
-class BrowsePath:
-    """representation of a single path through the Media Center browse tree.
-
-    Each path is split into 2 parts, 1 or more named nodes which are followed by 0 to n library field names.
-    """
-
-    def __init__(self, entry: str) -> None:
-        """Create new instance from a config entry."""
-        self.__entry = entry
-        vals = entry.split("|", 2)
-        self._names = vals[0].split(",")
-        self._tags = vals[1].split(",") if len(vals) == 2 else []
-
-    def contains(self, entry: list[str]) -> bool:
-        """Test if the given entry is part of this path, matches again name tags only."""
-        if len(entry) > len(self):
-            return False
-        for i in range(min(len(entry), len(self.names))):
-            if entry[i] != self[i]:
-                return False
-        return True
-
-    def get_media_classification(
-        self, entry: list[str]
-    ) -> tuple[MediaClass, MediaType] | None:
-        """Get the MediaClass and MediaType for the given entry."""
-        if not entry:
-            return None
-        if not self.contains(entry):
-            return None
-        if len(entry) > len(self):
-            return None
-        if len(entry) > len(self.names):
-            library_field_name = self[len(entry) - 1]
-            mc = MC_FIELD_TO_HA_MEDIACLASS.get(library_field_name, None)
-            mt = MC_FIELD_TO_HA_MEDIATYPE.get(library_field_name, None)
-            if mc and mt:
-                return MediaClass[mc], MediaType[mt]
-        for i in reversed(range(min(len(self.names), len(entry)))):
-            path_token = self[i]
-            mc = MC_FIELD_TO_HA_MEDIACLASS.get(path_token, None)
-            mt = MC_FIELD_TO_HA_MEDIATYPE.get(path_token, None)
-            if mc and mt:
-                return MediaClass[mc], MediaType[mt]
-        return None
-
-    @property
-    def names(self) -> list[str]:
-        """Get the name portion of the entry."""
-        return [] + self._names
-
-    @property
-    def tags(self) -> list[str]:
-        """Get the tags portion of the entry."""
-        return [] + self._tags
-
-    def __str__(self):
-        """Get str representation."""
-        return self.__entry
-
-    def __len__(self):
-        """Total number of nodes in the path."""
-        return len(self._names) + len(self._tags)
-
-    def __getitem__(self, index) -> str:
-        """Get the item at the specified index."""
-        if index < 0:
-            raise IndexError()
-        if index < len(self.names):
-            return self.names[index]
-        if index < len(self):
-            return self.tags[index - len(self.names)]
-        raise IndexError()
 
 
 V = TypeVar("V")
@@ -150,6 +76,8 @@ class MediaServerData:
     position_updated_at_by_zone: dict[str, dt.datetime] = field(default_factory=dict)
     zones: list[Zone] = field(default_factory=list)
     view_mode: ViewMode = ViewMode.UNKNOWN
+    browse_paths: list[BrowsePath] | None = None
+    last_path_refresh: dt.datetime | None = None
 
     def get_active_zone_name(self) -> str | None:
         """Get the current active zone name."""
@@ -199,6 +127,41 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
         self._media_server = media_server
         self.data = MediaServerData()
         self._extra_fields = extra_fields
+        self._last_path_refresh: dt.datetime | None = None
+
+    async def _refresh_paths_if_necessary(
+        self, current_version: str
+    ) -> list[BrowsePath]:
+        async def _get_paths() -> list[BrowsePath]:
+            try:
+                return convert_browse_rules(await self._media_server.get_browse_rules())
+            finally:
+                self._last_path_refresh = dt_util.utcnow()
+
+        if not _can_refresh_paths(self._media_server):
+            return []
+
+        if (
+            self.data.browse_paths is None
+            or self._last_path_refresh is None
+            or self.data.server_info is None
+        ):
+            return await _get_paths()
+
+        since_last = (dt_util.utcnow() - self._last_path_refresh).total_seconds()
+        if since_last >= 900:
+            _LOGGER.debug("Reloading paths, %d seconds since last refresh", since_last)
+            return await _get_paths()
+
+        if self.data.server_info.version != current_version:
+            _LOGGER.debug(
+                "Reloading paths, version change from %s to %s",
+                self.data.server_info.version,
+                current_version,
+            )
+            return await _get_paths()
+
+        return self.data.browse_paths
 
     async def _async_update_data(self) -> MediaServerData:
         """Fetch the latest status."""
@@ -235,6 +198,9 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
                 position_updated_at_by_zone=position_updated_at_by_zone,
                 zones=zones,
                 view_mode=view_mode,
+                browse_paths=await self._refresh_paths_if_necessary(
+                    server_info.version
+                ),
             )
         except InvalidAuthError as err:
             raise ConfigEntryAuthFailed from err
@@ -306,6 +272,46 @@ async def reconfigure_entry(hass: HomeAssistant, entry: ConfigEntry):
     await hass.config_entries.async_reload(entry.entry_id)
 
 
+def _translate_to_media_type(
+    media_type: mc_MediaType | str | None,
+    media_sub_type: mc_MediaSubType | str | None,
+    single: bool = False,
+) -> MediaType | str:
+    """Convert JRiver MediaType/SubType to HA MediaType."""
+    if media_type == mc_MediaType.VIDEO:
+        if media_sub_type == mc_MediaSubType.MOVIE:
+            return MediaType.MOVIE
+        if media_sub_type == mc_MediaSubType.TV_SHOW:
+            return MediaType.EPISODE if single else MediaType.TVSHOW
+        return MediaType.VIDEO
+
+    if media_type == mc_MediaType.AUDIO:
+        if single:
+            return MediaType.TRACK
+        return MediaType.MUSIC
+
+    if media_type == mc_MediaType.TV:
+        if single:
+            return MediaType.CHANNEL
+        return MediaType.TVSHOW
+
+    if media_type == mc_MediaType.IMAGE:
+        return MediaType.IMAGE
+
+    if media_type == mc_MediaType.PLAYLIST:
+        return MediaType.PLAYLIST
+
+    if not media_type:
+        if media_sub_type == mc_MediaSubType.MOVIE:
+            return MediaType.MOVIE
+        if media_sub_type == mc_MediaSubType.TV_SHOW:
+            return MediaType.EPISODE if single else MediaType.TVSHOW
+        if media_sub_type == mc_MediaSubType.MUSIC:
+            return MediaType.TRACK if single else MediaType.MUSIC
+
+    return ""
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
@@ -318,55 +324,23 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-def _translate_to_media_type(
-    media_type: mc_MediaType | str | None,
-    media_sub_type: mc_MediaSubType | str | None,
-    single: bool = False,
-) -> MediaType | str:
-    """Convert JRiver MediaType/SubType to HA MediaType."""
-    if not mc_MediaType or not mc_MediaSubType:
-        return ""
-
-    if media_type == mc_MediaType.VIDEO:
-        if media_sub_type == mc_MediaSubType.MOVIE:
-            return MediaType.MOVIE
-        if media_sub_type == mc_MediaSubType.TV_SHOW:
-            return MediaType.EPISODE if single else MediaType.TVSHOW
-        return MediaType.VIDEO
-
-    if media_type == mc_MediaType.AUDIO:
-        return MediaType.TRACK
-
-    if media_type == mc_MediaType.TV:
-        return MediaType.CHANNEL
-
-    if media_type == mc_MediaType.IMAGE:
-        return MediaType.IMAGE
-
-    if media_type == mc_MediaType.PLAYLIST:
-        return MediaType.PLAYLIST
-
-    return ""
-
-
 def _translate_to_media_class(
     media_type: mc_MediaType | str | None,
     media_sub_type: mc_MediaSubType | str | None,
     single: bool = False,
 ) -> MediaClass | str:
     """Convert JRiver MediaType/SubType to HA MediaClass."""
-    if not mc_MediaType or not mc_MediaSubType:
-        return ""
-
     if media_type == mc_MediaType.VIDEO:
         if media_sub_type == mc_MediaSubType.MOVIE:
             return MediaClass.MOVIE
         if media_sub_type == mc_MediaSubType.TV_SHOW:
-            return MediaClass.EPISODE if single else MediaType.TVSHOW
+            return MediaClass.EPISODE if single else MediaClass.TV_SHOW
         return MediaClass.VIDEO
 
     if media_type == mc_MediaType.AUDIO:
-        return MediaClass.TRACK
+        if single:
+            return MediaClass.TRACK
+        return MediaClass.MUSIC
 
     if media_type == mc_MediaType.TV:
         return MediaClass.CHANNEL
@@ -377,4 +351,18 @@ def _translate_to_media_class(
     if media_type == mc_MediaType.PLAYLIST:
         return MediaClass.PLAYLIST
 
+    if not media_type:
+        if media_sub_type == mc_MediaSubType.MOVIE:
+            return MediaClass.MOVIE
+        if media_sub_type == mc_MediaSubType.TV_SHOW:
+            return MediaClass.EPISODE if single else MediaClass.TV_SHOW
+        if media_sub_type == mc_MediaSubType.MUSIC:
+            return MediaClass.TRACK if single else MediaClass.MUSIC
+
     return ""
+
+
+def _can_refresh_paths(ms: MediaServer) -> bool:
+    """Show if the server version supports reload."""
+    v = ms.media_server_info.version
+    return v and v != "Unknown" and AwesomeVersion(v) >= "32.0.6"

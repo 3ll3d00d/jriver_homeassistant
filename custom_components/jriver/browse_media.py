@@ -2,7 +2,13 @@
 import contextlib
 import logging
 
-from hamcws import MediaServer
+from hamcws import (
+    BrowsePath,
+    MediaServer,
+    MediaSubType,
+    MediaType as mc_MediaType,
+    search_for_path,
+)
 
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
@@ -13,7 +19,8 @@ from homeassistant.components.media_player import (
 )
 from homeassistant.core import HomeAssistant
 
-from . import BrowsePath, _translate_to_media_class, _translate_to_media_type
+from . import _translate_to_media_class, _translate_to_media_type
+from .const import MC_FIELD_TO_HA_MEDIACLASS, MC_FIELD_TO_HA_MEDIATYPE
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -56,12 +63,6 @@ def _decode_media_class(item: dict) -> MediaClass | str:
     )
 
 
-def _find_browse_path(
-    browse_paths: list[BrowsePath], path_tokens: list[str]
-) -> BrowsePath | None:
-    return next((bp for bp in browse_paths if bp.contains(path_tokens)), None)
-
-
 async def browse_nodes(
     hass: HomeAssistant,
     ms: MediaServer,
@@ -74,7 +75,7 @@ async def browse_nodes(
         parent_id = "-1"
     parent_media_id = parent_id
     container_media_class = MediaClass.DIRECTORY
-    container_media_type: str = "library"
+    container_media_type: MediaType | str = "library"
 
     if parent_id == "-1":
         parent_name = None
@@ -84,9 +85,9 @@ async def browse_nodes(
         path_tokens = parent_name.split(" > ")
         if parent_content_type:
             container_media_type = parent_content_type
-        browse_path = _find_browse_path(browse_paths, path_tokens)
+        browse_path = search_for_path(browse_paths, path_tokens)
         if browse_path:
-            classification = browse_path.get_media_classification(path_tokens)
+            classification = _classify_browse_path(browse_path)
             if classification:
                 container_media_class = classification[0]
                 container_media_type = str(classification[1])
@@ -102,15 +103,19 @@ async def browse_nodes(
         items = []
         for name, node_id in nodes.items():
             child_path = path_tokens + [name]
-            browse_path = _find_browse_path(browse_paths, child_path)
+            browse_path = search_for_path(browse_paths, child_path)
             if not browse_path:
                 continue
-            classification = browse_path.get_media_classification(child_path)
+            classification = _classify_browse_path(browse_path)
+            mt: MediaType | str | None = None
             if classification:
                 mc, mt = classification
             else:
                 mc = container_media_class
-                mt = MediaType[container_media_type]
+                try:
+                    mt = MediaType[container_media_type]
+                except KeyError:
+                    mt = container_media_type
             vals = {
                 "id": node_id,
                 "media_id": f"N|{node_id}|{' > '.join(child_path)}",
@@ -173,3 +178,32 @@ async def browse_nodes(
                 children.append(item)
 
     return library_info, count
+
+
+def _classify_browse_path(path: BrowsePath) -> tuple[MediaClass, MediaType] | None:
+    def _translate(
+        mc_mt: mc_MediaType, mc_mst: MediaSubType | None
+    ) -> tuple[MediaClass, MediaType] | None:
+        mt: MediaType | str = _translate_to_media_type(mc_mt, mc_mst)
+        mc: MediaClass | str = _translate_to_media_class(mc_mt, mc_mst)
+        if isinstance(mt, MediaType) and isinstance(mc, MediaClass):
+            return mc, mt
+        return None
+
+    mt = MC_FIELD_TO_HA_MEDIATYPE.get(path.name, None)
+    mc = MC_FIELD_TO_HA_MEDIACLASS.get(path.name, None)
+    if mt and mc:
+        return MediaClass[mc], MediaType[mt]
+
+    for mc_mt in path.effective_media_types:
+        if path.effective_media_sub_types:
+            for mst in path.effective_media_sub_types:
+                vals = _translate(mc_mt, mst)
+                if vals:
+                    return vals
+        else:
+            vals = _translate(mc_mt, None)
+            if vals:
+                return vals
+
+    return None

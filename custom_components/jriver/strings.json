@@ -26,12 +26,12 @@
       "macs": {
         "description": "Select the MAC addresses that should be used for wake on lan.\nRequires the Home Assistant Wake on LAN integration to be enabled.",
         "data": {
-          "use_wol": "Uncheck to prevent provision of the remote.wake service.",
+          "use_wol": "Configure remote.wake service? (requires at least 1 MAC address)",
           "mac": "MAC address"
         }
       },
       "paths": {
-        "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced.",
+        "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually. ",
         "data": {
           "browse_paths": "View Paths"
         }
@@ -77,7 +77,7 @@
   "options": {
     "step": {
       "init": {
-        "description": "Please enter the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced.",
+        "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually. ",
         "data": {
           "browse_paths": "View Paths"
         }

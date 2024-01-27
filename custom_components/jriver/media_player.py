@@ -7,7 +7,13 @@ import datetime as dt
 import logging
 from typing import Any
 
-from hamcws import MediaServer, PlaybackInfo, PlaybackState
+from hamcws import (
+    BrowsePath,
+    MediaServer,
+    PlaybackInfo,
+    PlaybackState,
+    parse_browse_paths_from_text,
+)
 import voluptuous as vol
 
 from homeassistant.components import media_source
@@ -37,7 +43,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import BrowsePath, MediaServerUpdateCoordinator, _translate_to_media_type
+from . import MediaServerUpdateCoordinator, _can_refresh_paths, _translate_to_media_type
 from .browse_media import browse_nodes, media_source_content_filter
 from .const import (
     CONF_BROWSE_PATHS,
@@ -233,13 +239,17 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         self._media_server: MediaServer = media_server
         self._playback_info: PlaybackInfo | None = None
         self._position_updated_at: dt.datetime | None = None
-        self._browse_paths = [BrowsePath(bp) for bp in browse_paths]
+        self._conf_browse_paths = (
+            parse_browse_paths_from_text(browse_paths) if browse_paths else None
+        )
+        self._browse_paths: list[BrowsePath] | None = None
         self._extra_fields = extra_fields
         self._target_zone: str | None = zone_name
 
     def _reset_state(self):
         self._position_updated_at = None
         self._playback_info = None
+        self._browse_paths = None
 
     async def _clear_connection(self, close=True):
         self._reset_state()
@@ -279,6 +289,11 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
             self._target_zone
         )
         self._playback_info = self.coordinator.data.get_playback_info(self._target_zone)
+        self._browse_paths = (
+            self.coordinator.data.browse_paths
+            if _can_refresh_paths(self._media_server)
+            else self._conf_browse_paths
+        )
         self.async_write_ha_state()
 
     @property
@@ -571,6 +586,10 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         media_content_id: str | None = None,
     ) -> BrowseMedia:
         """Return a BrowseMedia instance."""
+        if not self._browse_paths:
+            raise BrowseError(
+                f"No browse paths loaded: {media_content_type} / {media_content_id}"
+            )
 
         if not media_content_type:
             card, _ = await browse_nodes(

@@ -7,12 +7,15 @@ from typing import Any
 
 import hamcws
 from hamcws import (
+    BrowsePath,
+    BrowseRule,
     CannotConnectError,
     InvalidAccessKeyError,
     InvalidAuthError,
     InvalidRequestError,
     MediaServer,
     MediaServerError,
+    parse_browse_paths_from_text,
 )
 import voluptuous as vol
 
@@ -39,6 +42,7 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
+from . import _can_refresh_paths
 from .const import (
     CONF_BROWSE_PATHS,
     CONF_DEVICE_PER_ZONE,
@@ -63,7 +67,7 @@ def _invalid_mac(mac: str) -> bool:
     )
 
 
-async def validate_http(
+async def connect_to_media_server(
     hass: core.HomeAssistant, data
 ) -> tuple[MediaServer, list[str]]:
     """Validate the user input allows us to connect over HTTP."""
@@ -101,12 +105,13 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._host: str = ""
         self._port: int = DEFAULT_PORT
         self._friendly_name: str = ""
+        self._expect_wol: bool = False
         self._mac_addresses: list[str] = []
         self._username: str | None = None
         self._password: str | None = None
         self._ssl: bool | None = DEFAULT_SSL
         self._device_per_zone: bool | None = DEFAULT_DEVICE_PER_ZONE
-        self._browse_paths: list[str] | None = DEFAULT_BROWSE_PATHS
+        self._browse_paths: list[str] = []
         self._device_zones: list[str] | None = None
         self._extra_fields: list[str] = []
         self._ms: MediaServer | None = None
@@ -129,13 +134,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if unique_id:
                     await self.async_set_unique_id(unique_id)
                     self._abort_if_unique_id_configured()
-                self._ms, self._mac_addresses = await validate_http(
-                    self.hass, self._get_data()
-                )
-                self._host = self._ms.host
-                self._port = self._ms.port
-                if not self._friendly_name:
-                    self._friendly_name = self._ms.media_server_info.name
+                await self._try_connect_to_media_server()
             except InvalidAccessKey:
                 errors["base"] = "invalid_access_key"
             except InvalidAuth:
@@ -156,6 +155,17 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self._show_user_form(errors)
 
+    async def _try_connect_to_media_server(self):
+        self._ms, self._mac_addresses = await connect_to_media_server(
+            self.hass, self._get_data()
+        )
+        self._host = self._ms.host
+        self._port = self._ms.port
+        if not self._friendly_name:
+            self._friendly_name = self._ms.media_server_info.name
+        if self._mac_addresses:
+            self._expect_wol = True
+
     async def async_step_credentials(self, user_input=None):
         """Handle username and password input."""
         errors = {}
@@ -165,13 +175,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._password = user_input.get(CONF_PASSWORD)
 
             try:
-                self._ms, self._mac_addresses = await validate_http(
-                    self.hass, self._get_data()
-                )
-                self._host = self._ms.host
-                self._port = self._ms.port
-                if not self._friendly_name:
-                    self._friendly_name = self._ms.media_server_info.name
+                await self._try_connect_to_media_server()
             except InvalidAuth:
                 errors["base"] = "invalid_auth"
             except CannotConnect:
@@ -189,12 +193,12 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             macs = user_input[CONF_MAC]
-            use_wol = user_input[CONF_USE_WOL] is True
-            if not macs and use_wol:
+            self._expect_wol = user_input[CONF_USE_WOL]
+            if not macs and self._expect_wol:
                 errors["base"] = "no_mac_addresses"
                 return self._show_macs_form(errors)
 
-            self._mac_addresses = macs if use_wol else []
+            self._mac_addresses = macs if self._expect_wol else []
             if any(_invalid_mac(m) for m in self._mac_addresses):
                 errors["base"] = "invalid_mac"
                 return self._show_macs_form(errors)
@@ -205,21 +209,35 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self._show_macs_form(errors)
 
     async def async_step_paths(self, user_input=None):
-        """Handle paths input."""
+        """Handle paths input, required for MC <32.0.6."""
         errors = {}
+
+        async def _next_form():
+            self._zone_names = [z.name for z in await self._ms.get_zones()]
+            if len(self._zone_names) > 1:
+                return await self.async_step_zones()
+            return await self.async_step_select_playback_fields()
+
+        if _can_refresh_paths(self._ms):
+            return await _next_form()
+
+        if not self._browse_paths:
+            self._browse_paths = sorted(DEFAULT_BROWSE_PATHS)
 
         if user_input is not None:
             self._browse_paths = user_input[CONF_BROWSE_PATHS]
 
-            if not self._browse_paths:
-                errors["base"] = "no_paths"
+            if self._browse_paths:
+                if self._browse_paths_are_valid():
+                    return await _next_form()
+                errors["base"] = "invalid_paths"
             else:
-                self._zone_names = [z.name for z in await self._ms.get_zones()]
-                if len(self._zone_names) > 1:
-                    return await self.async_step_zones()
-                return await self.async_step_select_playback_fields()
+                errors["base"] = "no_paths"
 
         return self._show_paths_form(errors)
+
+    def _browse_paths_are_valid(self) -> bool:
+        return parse_browse_paths_from_text(self._browse_paths) is not None
 
     async def async_step_zones(self, user_input=None):
         """Handle zones input."""
@@ -266,7 +284,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_import(self, data):
         """Handle import from YAML."""
         try:
-            await validate_http(self.hass, data)
+            await connect_to_media_server(self.hass, data)
         except InvalidAccessKey:
             reason = "invalid_access_key"
         except InvalidAuth:
@@ -327,7 +345,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def _show_macs_form(self, errors=None):
         schema = vol.Schema(
             {
-                vol.Required(CONF_USE_WOL, default=True): bool,
+                vol.Required(CONF_USE_WOL, default=self._expect_wol): bool,
                 vol.Optional(CONF_MAC, default=self._mac_addresses): TextSelector(
                     TextSelectorConfig(type=TextSelectorType.TEXT, multiple=True)
                 ),
@@ -340,11 +358,10 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @callback
     def _show_paths_form(self, errors=None):
-        default_browse_paths = self._browse_paths or DEFAULT_BROWSE_PATHS
         schema = vol.Schema(
             {
                 vol.Required(
-                    CONF_BROWSE_PATHS, default=default_browse_paths
+                    CONF_BROWSE_PATHS, default=self._browse_paths
                 ): TextSelector(
                     TextSelectorConfig(
                         type=TextSelectorType.TEXT, multiline=True, multiple=True
@@ -425,6 +442,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_DEVICE_PER_ZONE: self._device_per_zone,
             CONF_DEVICE_ZONES: self._device_zones,
             CONF_EXTRA_FIELDS: self._extra_fields,
+            CONF_USE_WOL: self._expect_wol,
         }
 
         return data
@@ -438,6 +456,10 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return JRiverOptionsFlowHandler(config_entry)
 
 
+def _format_rule(r: BrowseRule) -> str:
+    return f"{','.join(r.get_names())}{'|' if r.get_categories() else ''}{','.join(r.get_categories())}"
+
+
 class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
     """Allow reconfiguration of the browse paths."""
 
@@ -445,17 +467,28 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
         """Initialize options flow."""
         self.config_entry = config_entry
         self._library_fields: list[str] = []
-        self._browse_paths: list[str] = self._get_existing(CONF_BROWSE_PATHS, [])
+        self._browse_paths: list[BrowsePath] = self._get_existing(CONF_BROWSE_PATHS, [])
         self._extra_fields: list[str] = self._get_existing(CONF_EXTRA_FIELDS, [])
         self._mac_addresses: list[str] = self._get_existing(CONF_MAC, [])
         self._use_wol: bool = self._get_existing(CONF_USE_WOL, True)
+        self._ms: MediaServer | str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         errors = {}
-        if user_input is not None:
+
+        if not self._ms:
+            self._ms = await self._reload_ms()
+            if isinstance(self._ms, str):
+                errors["base"] = self._ms
+                self._ms = None
+
+        if self._ms and _can_refresh_paths(self._ms):
+            return await self.async_step_macs()
+
+        if not errors and user_input is not None:
             self._browse_paths = user_input.get(CONF_BROWSE_PATHS, [])
             if self._browse_paths:
                 return await self.async_step_macs()
@@ -478,32 +511,12 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
             errors=errors,
         )
 
-    async def _ensure_library_fields(self) -> dict[str, str]:
+    async def _ensure_library_fields(self) -> None:
         """Load the library fields from MediaServer if necessary."""
-        errors = {}
-        if not self._library_fields:
-            try:
-                ms, _ = await validate_http(self.hass, self.config_entry.data)
-            except InvalidAccessKey:
-                errors["base"] = "invalid_access_key"
-            except InvalidAuth:
-                errors["base"] = "invalid_auth"
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except TimeoutError:
-                errors["base"] = "timeout_connect"
-            except (InvalidRequest, InternalError):
-                errors["base"] = "unknown"
-            except AbortFlow as e:
-                raise e
-            except Exception:  # pylint: disable=broad-except
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
-            else:
-                self._library_fields = sorted(
-                    [f.name for f in await ms.get_library_fields()]
-                )
-        return errors
+        if not self._library_fields and isinstance(self._ms, MediaServer):
+            self._library_fields = sorted(
+                [f.name for f in await self._ms.get_library_fields()]
+            )
 
     async def async_step_fields(
         self, user_input: dict[str, Any] | None = None
@@ -513,7 +526,7 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
             self._extra_fields = user_input.get(CONF_EXTRA_FIELDS, [])
             return self.async_create_entry(title="", data=self._get_data())
 
-        errors = await self._ensure_library_fields()
+        await self._ensure_library_fields()
 
         schema = vol.Schema(
             {
@@ -526,13 +539,13 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
             }
         )
 
-        return self.async_show_form(step_id="fields", data_schema=schema, errors=errors)
+        return self.async_show_form(step_id="fields", data_schema=schema, errors={})
 
     async def async_step_macs(self, user_input=None):
         """Handle mac address input."""
         schema = vol.Schema(
             {
-                vol.Required(CONF_USE_WOL, default=True): bool,
+                vol.Required(CONF_USE_WOL, default=self._use_wol): bool,
                 vol.Optional(
                     CONF_MAC,
                     default=self._mac_addresses,
@@ -545,14 +558,14 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
         errors = {}
         if user_input is not None:
             macs = user_input[CONF_MAC]
-            use_wol = user_input[CONF_USE_WOL] is True
-            if not macs and use_wol:
+            self._use_wol = user_input[CONF_USE_WOL]
+            if not macs and self._use_wol:
                 errors["base"] = "no_mac_addresses"
                 return self.async_show_form(
                     step_id="macs", data_schema=schema, errors=errors
                 )
 
-            self._mac_addresses = macs if use_wol else []
+            self._mac_addresses = macs if self._use_wol else []
             if any(_invalid_mac(m) for m in self._mac_addresses):
                 errors["base"] = "invalid_mac"
                 return self.async_show_form(
@@ -582,6 +595,26 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
         if key in self.config_entry.data:
             return self.config_entry.data[key]
         return default_value
+
+    async def _reload_ms(self) -> MediaServer | str:
+        try:
+            ms, _ = await connect_to_media_server(self.hass, self.config_entry.data)
+            return ms
+        except InvalidAccessKey:
+            return "invalid_access_key"
+        except InvalidAuth:
+            return "invalid_auth"
+        except CannotConnect:
+            return "cannot_connect"
+        except TimeoutError:
+            return "timeout_connect"
+        except (InvalidRequest, InternalError):
+            return "unknown"
+        except AbortFlow as e:
+            raise e
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception")
+            return "unknown"
 
 
 class CannotConnect(exceptions.HomeAssistantError):
