@@ -338,7 +338,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         if not self._playback_info.duration_ms or self._playback_info.duration_ms < 0:
             return None
 
-        return self._playback_info.duration_ms * 1000
+        return round(self._playback_info.duration_ms / 1000)
 
     @property
     def media_position(self) -> int | None:
@@ -352,7 +352,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         if not self._playback_info.position_ms or self._playback_info.position_ms < 0:
             return None
 
-        return self._playback_info.position_ms * 1000
+        return round(self._playback_info.position_ms / 1000)
 
     @property
     def media_position_updated_at(self) -> dt.datetime | None:
