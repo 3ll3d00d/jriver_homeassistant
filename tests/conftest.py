@@ -20,8 +20,8 @@ def mock_setup_entry() -> Generator[AsyncMock, None, None]:
         yield mock_setup_entry
 
 
-@pytest.fixture
-def media_server() -> MediaServer:
+@pytest.fixture(params=["31.0.10", "32.0.6"])
+def media_server(request) -> MediaServer:
     """Mock a MediaServer."""
     ms = AsyncMock(MediaServer)
     type(ms).host = PropertyMock(return_value="localhost")
@@ -29,4 +29,5 @@ def media_server() -> MediaServer:
     msi = Mock(MediaServerInfo)
     type(ms).media_server_info = PropertyMock(return_value=msi)
     type(msi).name = PropertyMock(return_value="localhost")
+    type(msi).version = PropertyMock(return_value=request.param)
     return ms

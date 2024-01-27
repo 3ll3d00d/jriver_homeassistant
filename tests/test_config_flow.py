@@ -1,7 +1,9 @@
 """Test the JRiver Media Center config flow."""
 from unittest.mock import AsyncMock, Mock, patch
 
+from awesomeversion import AwesomeVersion
 from hamcws import (
+    BrowseRule,
     CannotConnectError,
     InvalidAccessKeyError,
     InvalidAuthError,
@@ -40,9 +42,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
 
-
 async def test_access_key_is_invalid_errors(
-        hass: HomeAssistant, mock_setup_entry: AsyncMock
+    hass: HomeAssistant, mock_setup_entry: AsyncMock
 ) -> None:
     """Test bad access key produces error."""
     result = await hass.config_entries.flow.async_init(
@@ -52,7 +53,7 @@ async def test_access_key_is_invalid_errors(
     assert result["errors"] == {}
 
     with patch(
-            "hamcws.load_media_server",
+        "hamcws.load_media_server",
     ) as patched:
         patched.side_effect = InvalidAccessKeyError()
 
@@ -80,7 +81,7 @@ async def test_access_key_is_invalid_errors(
     ],
 )
 async def test_ip_port_connection_errors(
-        hass: HomeAssistant, mock_setup_entry: AsyncMock, side_effect, named_error
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, side_effect, named_error
 ) -> None:
     """Test assorted connection error produces error."""
     result = await hass.config_entries.flow.async_init(
@@ -90,7 +91,7 @@ async def test_ip_port_connection_errors(
     assert result["errors"] == {}
 
     with patch(
-            "hamcws.load_media_server",
+        "hamcws.load_media_server",
     ) as patched:
         patched.side_effect = side_effect()
 
@@ -119,7 +120,7 @@ async def test_ip_port_connection_errors(
     ],
 )
 async def test_invalid_auth_prompts_for_creds(
-        hass: HomeAssistant, mock_setup_entry: AsyncMock, initial_vals
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, initial_vals
 ) -> None:
     """Test we handle invalid auth."""
     result = await hass.config_entries.flow.async_init(
@@ -129,7 +130,7 @@ async def test_invalid_auth_prompts_for_creds(
     assert result["errors"] == {}
 
     with patch(
-            "hamcws.load_media_server",
+        "hamcws.load_media_server",
     ) as patched:
         patched.side_effect = InvalidAuthError()
 
@@ -145,7 +146,7 @@ async def test_invalid_auth_prompts_for_creds(
 
     # request and supply a invalid user/pass
     with patch(
-            "hamcws.load_media_server",
+        "hamcws.load_media_server",
     ) as patched:
         patched.side_effect = InvalidAuthError()
         result = await hass.config_entries.flow.async_configure(
@@ -163,7 +164,7 @@ async def test_invalid_auth_prompts_for_creds(
 
     # request and supply a user/pass but connection fails
     with patch(
-            "hamcws.load_media_server",
+        "hamcws.load_media_server",
     ) as patched:
         patched.side_effect = CannotConnectError()
         result = await hass.config_entries.flow.async_configure(
@@ -181,7 +182,7 @@ async def test_invalid_auth_prompts_for_creds(
 
     # request and supply a user/pass and an unknown exception occurs
     with patch(
-            "hamcws.load_media_server",
+        "hamcws.load_media_server",
     ) as patched:
         patched.side_effect = Exception()
         result = await hass.config_entries.flow.async_configure(
@@ -199,8 +200,8 @@ async def test_invalid_auth_prompts_for_creds(
 
     # request and supply a user/pass and we can continue
     with patch(
-            "hamcws.load_media_server",
-            return_value=(Mock(MediaServer), []),
+        "hamcws.load_media_server",
+        return_value=(Mock(MediaServer), []),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -218,8 +219,7 @@ async def test_invalid_auth_prompts_for_creds(
 
 
 async def test_connect_via_access_key_provides_mac_address(
-        hass: HomeAssistant,
-        mock_setup_entry: AsyncMock,
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, media_server: MediaServer
 ) -> None:
     """Test no user input is required if api key provides a valid mac address."""
     result = await hass.config_entries.flow.async_init(
@@ -227,11 +227,10 @@ async def test_connect_via_access_key_provides_mac_address(
     )
     await hass.async_block_till_done()
 
-    media_server = Mock(MediaServer)
     mac_addresses = ["ab:cd:ef:fe:dc:ba"]
     with patch(
-            "hamcws.load_media_server",
-            return_value=(media_server, mac_addresses),
+        "hamcws.load_media_server",
+        return_value=(media_server, mac_addresses),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -250,12 +249,15 @@ async def test_connect_via_access_key_provides_mac_address(
 
     assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {}
-    assert result["step_id"] == "paths"
+    assert (
+        result["step_id"] == "paths"
+        if media_server.media_server_info.version.startswith("31")
+        else "select_playback_fields"
+    )
 
 
 async def test_mac_address_must_be_valid_if_required(
-        hass: HomeAssistant,
-        mock_setup_entry: AsyncMock,
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, media_server: MediaServer
 ) -> None:
     """Test user can supply mac addresses and they get validated."""
     result = await hass.config_entries.flow.async_init(
@@ -263,11 +265,9 @@ async def test_mac_address_must_be_valid_if_required(
     )
     await hass.async_block_till_done()
 
-    media_server = Mock(MediaServer)
-    mac_addresses = []
     with patch(
-            "hamcws.load_media_server",
-            return_value=(media_server, mac_addresses),
+        "hamcws.load_media_server",
+        return_value=(media_server, []),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -306,12 +306,15 @@ async def test_mac_address_must_be_valid_if_required(
 
     assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {}
-    assert result["step_id"] == "paths"
+    assert (
+        result["step_id"] == "paths"
+        if media_server.media_server_info.version.startswith("31")
+        else "select_playback_fields"
+    )
 
 
 async def test_browse_paths_must_be_supplied(
-        hass: HomeAssistant,
-        mock_setup_entry: AsyncMock,
+    hass: HomeAssistant, mock_setup_entry: AsyncMock, media_server: MediaServer
 ) -> None:
     """Test user must provided some browse paths."""
     result = await hass.config_entries.flow.async_init(
@@ -319,11 +322,9 @@ async def test_browse_paths_must_be_supplied(
     )
     await hass.async_block_till_done()
 
-    media_server = Mock(MediaServer)
-    mac_addresses = []
     with patch(
-            "hamcws.load_media_server",
-            return_value=(media_server, mac_addresses),
+        "hamcws.load_media_server",
+        return_value=(media_server, []),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -343,25 +344,28 @@ async def test_browse_paths_must_be_supplied(
 
     assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {}
-    assert result["step_id"] == "paths"
+    if media_server.media_server_info.version.startswith("31"):
+        assert result["step_id"] == "paths"
 
-    # must provide at least one path
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_BROWSE_PATHS: []}
-    )
-    await hass.async_block_till_done()
+        # must provide at least one path
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_BROWSE_PATHS: []}
+        )
+        await hass.async_block_till_done()
 
-    assert result["type"] == FlowResultType.FORM
-    assert result["errors"] == {"base": "no_paths"}
-    assert result["step_id"] == "paths"
+        assert result["type"] == FlowResultType.FORM
+        assert result["errors"] == {"base": "no_paths"}
+        assert result["step_id"] == "paths"
 
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_BROWSE_PATHS: ["test,me|out"]}
-    )
-    await hass.async_block_till_done()
+        # require at least one path
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_BROWSE_PATHS: ["test,me|out"]}
+        )
+        await hass.async_block_till_done()
 
-    assert result["type"] == FlowResultType.FORM
-    assert result["errors"] == {}
+        assert result["type"] == FlowResultType.FORM
+        assert result["errors"] == {}
+
     assert result["step_id"] == "select_playback_fields"
 
 
@@ -386,7 +390,10 @@ def _get_zone(id: int, name: str):
     ],
 )
 async def test_zone_selection_if_multiple_zones(
-        hass: HomeAssistant, mock_setup_entry: AsyncMock, zones: list[Zone]
+    hass: HomeAssistant,
+    mock_setup_entry: AsyncMock,
+    zones: list[Zone],
+    media_server: MediaServer,
 ) -> None:
     """Test user can choose to configure an entity per zone."""
     result = await hass.config_entries.flow.async_init(
@@ -394,10 +401,9 @@ async def test_zone_selection_if_multiple_zones(
     )
     await hass.async_block_till_done()
 
-    media_server = AsyncMock(MediaServer)
     with patch(
-            "hamcws.load_media_server",
-            return_value=(media_server, []),
+        "hamcws.load_media_server",
+        return_value=(media_server, []),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -408,6 +414,8 @@ async def test_zone_selection_if_multiple_zones(
     assert result["errors"] == {}
     assert result["step_id"] == "macs"
 
+    media_server.get_zones = AsyncMock(return_value=zones)
+
     # expecting a MAC address to be present when required
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
@@ -417,14 +425,15 @@ async def test_zone_selection_if_multiple_zones(
 
     assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {}
-    assert result["step_id"] == "paths"
 
-    # must provide at least one path
-    media_server.get_zones = AsyncMock(return_value=zones)
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_BROWSE_PATHS: ["test,me|out"]}
-    )
-    await hass.async_block_till_done()
+    if media_server.media_server_info.version.startswith("31"):
+        assert result["step_id"] == "paths"
+
+        # must provide at least one path
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_BROWSE_PATHS: ["test,me|out"]}
+        )
+        await hass.async_block_till_done()
 
     if len(zones) < 2:
         assert result["type"] == FlowResultType.FORM
@@ -477,10 +486,10 @@ async def test_zone_selection_if_multiple_zones(
 
 @pytest.mark.parametrize("add_fields", [True, False])
 async def test_can_supply_playback_fields(
-        hass: HomeAssistant,
-        mock_setup_entry: AsyncMock,
-        add_fields: bool,
-        media_server: MediaServer,
+    hass: HomeAssistant,
+    mock_setup_entry: AsyncMock,
+    add_fields: bool,
+    media_server: MediaServer,
 ) -> None:
     """Test entry created with extra fields or not."""
     result = await hass.config_entries.flow.async_init(
@@ -491,8 +500,8 @@ async def test_can_supply_playback_fields(
     values: list[LibraryField] = [LibraryField("A", "A", "A", "A")]
     media_server.get_library_fields = AsyncMock(return_value=values)
     with patch(
-            "hamcws.load_media_server",
-            return_value=(media_server, []),
+        "hamcws.load_media_server",
+        return_value=(media_server, []),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -512,16 +521,17 @@ async def test_can_supply_playback_fields(
 
     assert result["type"] == FlowResultType.FORM
     assert result["errors"] == {}
-    assert result["step_id"] == "paths"
+    if media_server.media_server_info.version.startswith("31"):
+        assert result["step_id"] == "paths"
 
-    # one path
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {CONF_BROWSE_PATHS: ["test,me|out"]}
-    )
-    await hass.async_block_till_done()
+        # one path
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_BROWSE_PATHS: ["test,me|out"]}
+        )
+        await hass.async_block_till_done()
+        assert result["type"] == FlowResultType.FORM
+        assert result["errors"] == {}
 
-    assert result["type"] == FlowResultType.FORM
-    assert result["errors"] == {}
     assert result["step_id"] == "select_playback_fields"
 
     # fields either way
@@ -534,7 +544,7 @@ async def test_can_supply_playback_fields(
 
 
 async def test_reconfigure_options(
-        hass: HomeAssistant, media_server: MediaServer
+    hass: HomeAssistant, media_server: MediaServer
 ) -> None:
     """Can reconfigure options."""
     config_entry = MockConfigEntry(
@@ -563,10 +573,17 @@ async def test_reconfigure_options(
         ),
         patch("custom_components.jriver.get_ms", return_value=media_server),
         patch(
-            "custom_components.jriver.config_flow.JRiverOptionsFlowHandler._ensure_library_fields",
-            return_value={},
+            "custom_components.jriver.config_flow.JRiverOptionsFlowHandler._reload_ms",
+            return_value=media_server,
         ),
     ):
+        values: list[BrowseRule] = [
+            BrowseRule(r"Audio\Artist", r"Artist\Album", ""),
+            BrowseRule(r"Video\Movies", "", ""),
+        ]
+        media_server.get_browse_rules = AsyncMock(return_value=values)
+        media_server.get_library_fields = AsyncMock(return_value={})
+
         config_entry.add_to_hass(hass)
         assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
@@ -574,20 +591,32 @@ async def test_reconfigure_options(
         # show initial form
         result = await hass.config_entries.options.async_init(config_entry.entry_id)
 
-        # no paths
-        result = await hass.config_entries.options.async_configure(
-            result["flow_id"], user_input={CONF_BROWSE_PATHS: []}
-        )
-        assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {"base": "no_paths"}
-        assert result["step_id"] == "init"
+        if media_server.media_server_info.version.startswith("31"):
+            # no paths
+            result = await hass.config_entries.options.async_configure(
+                result["flow_id"], user_input={CONF_BROWSE_PATHS: []}
+            )
+            assert result["type"] == FlowResultType.FORM
+            assert result["errors"] == {"base": "no_paths"}
+            assert result["step_id"] == "init"
 
-        # some paths
-        result = await hass.config_entries.options.async_configure(
-            result["flow_id"], user_input={CONF_BROWSE_PATHS: ["a,b|c,d", "1,2|3,4"]}
-        )
-        assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {}
+            # can reload paths
+            if AwesomeVersion(media_server.media_server_info.version) >= "32.0.6":
+                result = await hass.config_entries.options.async_configure(
+                    result["flow_id"], user_input={"refresh_paths": True}
+                )
+                assert result["type"] == FlowResultType.FORM
+                assert result["errors"] == {}
+                assert result["step_id"] == "init"
+
+            # some paths
+            result = await hass.config_entries.options.async_configure(
+                result["flow_id"],
+                user_input={CONF_BROWSE_PATHS: ["a,b|c,d", "1,2|3,4"]},
+            )
+            assert result["type"] == FlowResultType.FORM
+            assert result["errors"] == {}
+
         assert result["step_id"] == "macs"
 
         # need a mac
