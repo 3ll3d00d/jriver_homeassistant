@@ -247,11 +247,13 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         self._target_zone: str | None = zone_name
 
     def _reset_state(self):
+        _LOGGER.debug('Resetting state')
         self._position_updated_at = None
         self._playback_info = None
         self._browse_paths = None
 
     async def _clear_connection(self, close=True):
+        _LOGGER.debug('Clearing connection (close=%s)', close)
         self._reset_state()
         self.async_write_ha_state()
         if close:

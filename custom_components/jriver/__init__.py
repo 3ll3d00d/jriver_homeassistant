@@ -184,15 +184,23 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
 
             playback_info_by_zone: dict[str, PlaybackInfo] = {}
             position_updated_at_by_zone: dict[str, dt.datetime] = {}
+            pos_updated_at = dt_util.utcnow()
+
             for i, task in enumerate(zone_tasks):
                 zone_name = zones[i].name
                 playback_info: PlaybackInfo = task.result()
                 playback_info_by_zone[zone_name] = playback_info
                 last_info = self.data.playback_info_by_zone.get(zone_name, None)
                 if last_info and last_info.position_ms != playback_info.position_ms:
-                    position_updated_at_by_zone[zone_name] = dt_util.utcnow()
+                    _LOGGER.debug(
+                        "[%s] Updated %s position: %d",
+                        self._media_server.media_server_info.name,
+                        zone_name,
+                        playback_info.position_ms,
+                    )
+                    position_updated_at_by_zone[zone_name] = pos_updated_at
 
-            return MediaServerData(
+            new_data = MediaServerData(
                 server_info=server_info,
                 playback_info_by_zone=playback_info_by_zone,
                 position_updated_at_by_zone=position_updated_at_by_zone,
@@ -202,6 +210,19 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
                     server_info.version
                 ),
             )
+
+            last_zone = self.data.get_active_zone_name()
+            new_zone = new_data.get_active_zone_name()
+
+            if last_zone != new_zone:
+                _LOGGER.debug(
+                    '[%s] Active zone change "%s" -> "%s"',
+                    self._media_server.media_server_info.name,
+                    last_zone,
+                    new_zone,
+                )
+
+            return new_data
         except InvalidAuthError as err:
             raise ConfigEntryAuthFailed from err
         except (CannotConnectError, MediaServerError, InvalidRequestError) as err:
