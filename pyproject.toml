@@ -12,8 +12,8 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.11"
-homeassistant = "*"
+python = ">=3.11,<3.13"
+homeassistant = "2024.2.1"
 hamcws = "*"
 aioitertools = "*"
 
