@@ -83,6 +83,10 @@ async def async_setup_entry(
 
     if mac_addresses:
         platform.async_register_entity_service(SERVICE_WAKE, {}, "async_send_wol")
+    else:
+        _LOGGER.debug(
+            "No MAC addresses found for %s, %s not registered", name, SERVICE_WAKE
+        )
 
     unique_id = f"{config_entry.unique_id or config_entry.entry_id}_remote"
     async_add_entities(

@@ -231,7 +231,7 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up mcws from a config entry."""
-    ms = await get_ms(hass, entry)
+    ms = get_ms(hass, entry)
 
     extra_fields: list[str] | None = (
         entry.options[CONF_EXTRA_FIELDS]
@@ -243,6 +243,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await coordinator.async_config_entry_first_refresh()
 
     async def _close(event):
+        _LOGGER.debug("[%s] Closing media server connection", event.entry_id)
         await ms.close()
 
     remove_stop_listener = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _close)
@@ -254,9 +255,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if CONF_BROWSE_PATHS in entry.options
         else entry.data[CONF_BROWSE_PATHS]
     )
-    mac_addresses = (
-        entry.options[CONF_MAC] if CONF_MAC in entry.options else entry.data[CONF_MAC]
-    )
+
+    mac_addresses = []
+    if CONF_MAC in entry.data:
+        mac_addresses = entry.data[CONF_MAC]
+    if CONF_MAC in entry.options:
+        _LOGGER.debug("[%s] Using MAC addresses from options", entry.entry_id)
+        mac_addresses = entry.options[CONF_MAC]
+
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_MEDIA_SERVER: ms,
         DATA_REMOVE_STOP_LISTENER: remove_stop_listener,
@@ -274,7 +280,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
+def get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
     """Get a MediaServer instance."""
     conn = get_mcws_connection(
         entry.data[CONF_HOST],
