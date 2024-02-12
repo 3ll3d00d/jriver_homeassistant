@@ -37,6 +37,8 @@ async def async_setup_entry(
     name = data[DATA_SERVER_NAME]
     ms: MediaServer = data[DATA_MEDIA_SERVER]
     uid_prefix = config_entry.unique_id or config_entry.entry_id
+    coordinator: MediaServerUpdateCoordinator = data[DATA_COORDINATOR]
+    await coordinator.async_config_entry_first_refresh()
 
     entities = [
         JRiverActiveZoneSensor(

@@ -173,7 +173,13 @@
     },
     "wake": {
       "name": "Use Wake On Lan to wake the MediaServer",
-      "description": "Sends a WOL magic packet. "
+      "description": "Sends a WOL magic packet. ",
+      "fields": {
+        "entity_id": {
+          "name": "entity id",
+          "description": "the target media server"
+        }
+      }
     }
   }
 }

@@ -42,7 +42,6 @@ from homeassistant.helpers.selector import (
     TextSelectorType,
 )
 
-from . import _can_refresh_paths
 from .const import (
     CONF_BROWSE_PATHS,
     CONF_DEVICE_PER_ZONE,
@@ -55,6 +54,7 @@ from .const import (
     DEFAULT_SSL,
     DEFAULT_TIMEOUT,
     DOMAIN,
+    _can_refresh_paths,
 )
 
 _LOGGER = logging.getLogger(__name__)

@@ -65,7 +65,11 @@ send_mcc:
         text:
 
 wake:
-  target:
-    entity:
-      integration: jriver
-      domain: remote
+  fields:
+    entity_id:
+      example: "remote.mcserver"
+      required: true
+      selector:
+        entity:
+          integration: jriver
+          domain: remote

@@ -43,7 +43,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import MediaServerUpdateCoordinator, _can_refresh_paths, _translate_to_media_type
+from . import MediaServerUpdateCoordinator, _translate_to_media_type
 from .browse_media import browse_nodes, media_source_content_filter
 from .const import (
     CONF_BROWSE_PATHS,
@@ -60,6 +60,7 @@ from .const import (
     DEFAULT_SSL,
     DEFAULT_TIMEOUT,
     DOMAIN,
+    _can_refresh_paths,
 )
 from .entity import MediaServerEntity, cmd
 

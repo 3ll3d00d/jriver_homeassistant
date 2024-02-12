@@ -1,33 +1,25 @@
 """The JRiver Media Center (https://jriver.com/) integration."""
 from __future__ import annotations
 
-import asyncio
-from dataclasses import dataclass, field
-import datetime as dt
 import logging
-from typing import TypeVar
 
-from awesomeversion import AwesomeVersion
+from aioitertools import asyncio
 from hamcws import (
-    BrowsePath,
-    CannotConnectError,
-    InvalidAuthError,
-    InvalidRequestError,
     MediaServer,
-    MediaServerError,
-    MediaServerInfo,
     MediaSubType as mc_MediaSubType,
     MediaType as mc_MediaType,
-    PlaybackInfo,
-    ViewMode,
-    Zone,
-    convert_browse_rules,
     get_mcws_connection,
 )
+import voluptuous as vol
 
 from homeassistant.components.media_player import MediaClass, MediaType
+from homeassistant.components.wake_on_lan import (
+    DOMAIN as WOL_DOMAIN,
+    SERVICE_SEND_MAGIC_PACKET,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    CONF_ENTITY_ID,
     CONF_HOST,
     CONF_MAC,
     CONF_NAME,
@@ -38,11 +30,10 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STOP,
     Platform,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-import homeassistant.util.dt as dt_util
+from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_BROWSE_PATHS,
@@ -58,180 +49,86 @@ from .const import (
     DATA_SERVER_NAME,
     DATA_ZONES,
     DOMAIN,
+    SERVICE_WAKE,
 )
+from .coordinator import MediaServerUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.MEDIA_PLAYER, Platform.REMOTE, Platform.SENSOR]
 
-
-V = TypeVar("V")
-
-
-@dataclass(frozen=True, kw_only=True)
-class MediaServerData:
-    """MediaServer data."""
-
-    server_info: MediaServerInfo | None = None
-    playback_info_by_zone: dict[str, PlaybackInfo] = field(default_factory=dict)
-    position_updated_at_by_zone: dict[str, dt.datetime] = field(default_factory=dict)
-    zones: list[Zone] = field(default_factory=list)
-    view_mode: ViewMode = ViewMode.UNKNOWN
-    browse_paths: list[BrowsePath] | None = None
-    last_path_refresh: dt.datetime | None = None
-
-    def get_active_zone_name(self) -> str | None:
-        """Get the current active zone name."""
-        return next((z.name for z in self.zones if z.active), None)
-
-    def get_active_zone_id(self) -> int | None:
-        """Get the current active zone id."""
-        return next((z.id for z in self.zones if z.active), None)
-
-    def get_playback_info(self, target_zone: str | None) -> PlaybackInfo | None:
-        """Get PlaybackInfo for the given zone if provided or the currently active zone."""
-        return self._get_val_for_zone(self.playback_info_by_zone, target_zone)
-
-    def get_position_updated_at(self, target_zone: str | None) -> dt.datetime | None:
-        """Get last position updated at for the given zone if provided or the currently active zone."""
-        return self._get_val_for_zone(self.position_updated_at_by_zone, target_zone)
-
-    def _get_val_for_zone(
-        self, vals: dict[str, V], target_zone: str | None
-    ) -> V | None:
-        if target_zone:
-            return vals.get(target_zone, None)
-        active_zone = next((z for z in self.zones if z.active), None)
-        if not active_zone and self.zones:
-            active_zone = self.zones[0]
-        if active_zone:
-            return vals.get(active_zone.name, None)
-        return None
+PLATFORM_SCHEMA = cv.platform_only_config_schema
 
 
-class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
-    """Store MediaServer data."""
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Set up the JRiver Media Center component."""
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        media_server: MediaServer,
-        extra_fields: list[str] | None,
-    ) -> None:
-        """Initialize."""
-        super().__init__(
-            hass,
-            _LOGGER,
-            name=DOMAIN,
-            update_interval=dt.timedelta(seconds=1),
+    async def async_send_wol(call: ServiceCall) -> None:
+        """Send WOL packet to each MAC address."""
+        entity_id: str | None = call.data.get(CONF_ENTITY_ID)
+        if not entity_id:
+            _LOGGER.warning("Unable to send WOL, no entity_id specified")
+            return
+
+        tokens = entity_id.split(".")
+        if len(tokens) != 2:
+            _LOGGER.warning(
+                "Unable to send WOL, unexpected entity_id format %s", entity_id
+            )
+            return
+
+        domain_data = next(
+            (
+                data
+                for data in hass.data[DOMAIN].values()
+                if data[DATA_SERVER_NAME].casefold() == tokens[1].casefold()
+            ),
+            None,
         )
-        self._media_server = media_server
-        self.data = MediaServerData()
-        self._extra_fields = extra_fields
-        self._last_path_refresh: dt.datetime | None = None
-
-    async def _refresh_paths_if_necessary(
-        self, current_version: str
-    ) -> list[BrowsePath]:
-        async def _get_paths() -> list[BrowsePath]:
-            try:
-                return convert_browse_rules(await self._media_server.get_browse_rules())
-            finally:
-                self._last_path_refresh = dt_util.utcnow()
-
-        if not _can_refresh_paths(self._media_server):
-            return []
-
-        if (
-            self.data.browse_paths is None
-            or self._last_path_refresh is None
-            or self.data.server_info is None
-        ):
-            return await _get_paths()
-
-        since_last = (dt_util.utcnow() - self._last_path_refresh).total_seconds()
-        if since_last >= 900:
-            _LOGGER.debug("Reloading paths, %d seconds since last refresh", since_last)
-            return await _get_paths()
-
-        if self.data.server_info.version != current_version:
-            _LOGGER.debug(
-                "Reloading paths, version change from %s to %s",
-                self.data.server_info.version,
-                current_version,
+        if not domain_data:
+            _LOGGER.warning(
+                "Unable to send WOL, no such server found in domain %s", entity_id
             )
-            return await _get_paths()
+            return
 
-        return self.data.browse_paths
-
-    async def _async_update_data(self) -> MediaServerData:
-        """Fetch the latest status."""
-        try:
-            server_info, zones, view_mode = await asyncio.gather(
-                self._media_server.alive(),
-                self._media_server.get_zones(),
-                self._media_server.get_view_mode(),
+        if DATA_MAC_ADDRESSES not in domain_data:
+            _LOGGER.warning(
+                "Unable to send WOL, No MAC addresses found in entity %s", entity_id
             )
-            zone_tasks: list[asyncio.Task]
-            async with asyncio.TaskGroup() as tg:
-                zone_tasks = [
-                    tg.create_task(
-                        self._media_server.get_playback_info(
-                            zone, extra_fields=self._extra_fields
-                        )
-                    )
-                    for zone in zones
-                ]
+            return
 
-            playback_info_by_zone: dict[str, PlaybackInfo] = {}
-            position_updated_at_by_zone: dict[str, dt.datetime] = {}
-            pos_updated_at = dt_util.utcnow()
+        mac_addresses: list[str] = domain_data[DATA_MAC_ADDRESSES]
 
-            for i, task in enumerate(zone_tasks):
-                zone_name = zones[i].name
-                playback_info: PlaybackInfo = task.result()
-                playback_info_by_zone[zone_name] = playback_info
-                last_info = self.data.playback_info_by_zone.get(zone_name, None)
-                if last_info and last_info.position_ms != playback_info.position_ms:
-                    _LOGGER.debug(
-                        "[%s] Updated %s position: %d",
-                        self._media_server.media_server_info.name,
-                        zone_name,
-                        playback_info.position_ms,
-                    )
-                    position_updated_at_by_zone[zone_name] = pos_updated_at
-
-            new_data = MediaServerData(
-                server_info=server_info,
-                playback_info_by_zone=playback_info_by_zone,
-                position_updated_at_by_zone=position_updated_at_by_zone,
-                zones=zones,
-                view_mode=view_mode,
-                browse_paths=await self._refresh_paths_if_necessary(
-                    server_info.version
-                ),
+        if not hass.services.has_service(WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET):
+            _LOGGER.warning(
+                "Service wake_on_lan not configured, unable to send WOL to %s for %s",
+                str(mac_addresses),
+                entity_id,
             )
+            return
 
-            last_zone = self.data.get_active_zone_name()
-            new_zone = new_data.get_active_zone_name()
-
-            if last_zone != new_zone:
-                _LOGGER.debug(
-                    '[%s] Active zone change "%s" -> "%s"',
-                    self._media_server.media_server_info.name,
-                    last_zone,
-                    new_zone,
+        _LOGGER.debug("Sending WOL to %s for %s", str(mac_addresses), entity_id)
+        await asyncio.gather(
+            *[
+                hass.services.async_call(
+                    WOL_DOMAIN, SERVICE_SEND_MAGIC_PACKET, service_data={"mac": mac}
                 )
+                for mac in mac_addresses
+            ]
+        )
 
-            return new_data
-        except InvalidAuthError as err:
-            raise ConfigEntryAuthFailed from err
-        except (CannotConnectError, MediaServerError, InvalidRequestError) as err:
-            raise UpdateFailed from err
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_WAKE,
+        async_send_wol,
+        vol.Schema({vol.Required(CONF_ENTITY_ID): str}),
+    )
+
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up mcws from a config entry."""
-    ms = get_ms(hass, entry)
+    ms = _get_ms(hass, entry)
 
     extra_fields: list[str] | None = (
         entry.options[CONF_EXTRA_FIELDS]
@@ -239,11 +136,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         else entry.data[CONF_EXTRA_FIELDS]
     )
 
-    coordinator = MediaServerUpdateCoordinator(hass, ms, extra_fields)
-    await coordinator.async_config_entry_first_refresh()
+    ms_coordinator = MediaServerUpdateCoordinator(hass, ms, extra_fields)
 
     async def _close(event):
-        _LOGGER.debug("[%s] Closing media server connection", event.entry_id)
+        _LOGGER.debug("[%s] Closing media server connection", entry.entry_id)
         await ms.close()
 
     remove_stop_listener = hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _close)
@@ -269,8 +165,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DATA_REMOVE_UPDATE_LISTENER: remove_update_listener,
         DATA_ZONES: entry.data[CONF_DEVICE_ZONES],
         DATA_BROWSE_PATHS: browse_paths,
-        DATA_COORDINATOR: coordinator,
-        DATA_SERVER_NAME: entry.data.get(CONF_NAME, ms.media_server_info.name),
+        DATA_COORDINATOR: ms_coordinator,
+        DATA_SERVER_NAME: entry.data[CONF_NAME],
         DATA_EXTRA_FIELDS: extra_fields,
         DATA_MAC_ADDRESSES: mac_addresses,
     }
@@ -280,7 +176,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-def get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
+def _get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
     """Get a MediaServer instance."""
     conn = get_mcws_connection(
         entry.data[CONF_HOST],
@@ -387,9 +283,3 @@ def _translate_to_media_class(
             return MediaClass.TRACK if single else MediaClass.MUSIC
 
     return ""
-
-
-def _can_refresh_paths(ms: MediaServer) -> bool:
-    """Show if the server version supports reload."""
-    v = ms.media_server_info.version
-    return v and v != "Unknown" and AwesomeVersion(v) >= "32.0.6"

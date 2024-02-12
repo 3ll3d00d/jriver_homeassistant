@@ -1,4 +1,8 @@
 """Constants for the JRiver Media Center integration."""
+from __future__ import annotations
+
+from awesomeversion import AwesomeVersion
+from hamcws import MediaServer
 
 CONF_BROWSE_PATHS = "browse_paths"
 CONF_DEVICE_PER_ZONE = "per_zone"
@@ -50,3 +54,11 @@ MC_FIELD_TO_HA_MEDIATYPE: dict[str, str] = {
 MC_FIELD_TO_HA_MEDIACLASS: dict[str, str] = {
     k: "TV_SHOW" if v == "TVSHOW" else v for k, v in MC_FIELD_TO_HA_MEDIATYPE.items()
 }
+
+SERVICE_WAKE = "wake"
+
+
+def _can_refresh_paths(ms: MediaServer) -> bool:
+    """Show if the server version supports reload."""
+    v = ms.media_server_info.version if ms.media_server_info else None
+    return v and v != "Unknown" and AwesomeVersion(v) >= "32.0.6"
