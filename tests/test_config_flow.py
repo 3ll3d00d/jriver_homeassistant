@@ -17,7 +17,7 @@ from hamcws import (
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.jriver import MediaServerData
+from custom_components.jriver.coordinator import MediaServerData
 from homeassistant import config_entries
 from custom_components.jriver.const import (
     CONF_BROWSE_PATHS,
@@ -571,7 +571,7 @@ async def test_reconfigure_options(
             "custom_components.jriver.MediaServerUpdateCoordinator._async_update_data",
             return_value=MediaServerData(server_info=MediaServerInfo({})),
         ),
-        patch("custom_components.jriver.get_ms", return_value=media_server),
+        patch("custom_components.jriver._get_ms", return_value=media_server),
         patch(
             "custom_components.jriver.config_flow.JRiverOptionsFlowHandler._reload_ms",
             return_value=media_server,
