@@ -193,4 +193,6 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
         except InvalidAuthError as err:
             raise ConfigEntryAuthFailed from err
         except (CannotConnectError, MediaServerError, InvalidRequestError) as err:
+            n = self._media_server.media_server_info.name if self._media_server.media_server_info else 'Unknown'
+            _LOGGER.debug('[%s] Update failure due to %s', n, str(err))
             raise UpdateFailed from err
