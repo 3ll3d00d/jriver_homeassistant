@@ -158,11 +158,17 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
                 playback_info: PlaybackInfo = task.result()
                 playback_info_by_zone[zone_name] = playback_info
                 last_info = self.data.playback_info_by_zone.get(zone_name, None)
-                if last_info and last_info.position_ms != playback_info.position_ms:
+                if playback_info.position_ms:
+                    delta = (
+                        playback_info.position_ms - last_info.position_ms
+                        if last_info
+                        else 0
+                    )
                     _LOGGER.debug(
-                        "[%s] Updated %s position: %d",
+                        "[%s] Updated %s position by %d to %d",
                         self._media_server.media_server_info.name,
                         zone_name,
+                        delta,
                         playback_info.position_ms,
                     )
                     position_updated_at_by_zone[zone_name] = pos_updated_at
@@ -193,6 +199,15 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
         except InvalidAuthError as err:
             raise ConfigEntryAuthFailed from err
         except (CannotConnectError, MediaServerError, InvalidRequestError) as err:
-            n = self._media_server.media_server_info.name if self._media_server.media_server_info else 'Unknown'
-            _LOGGER.debug('[%s] Update failure due to %s', n, str(err))
+            if _LOGGER.isEnabledFor(logging.DEBUG):
+                n = (
+                    self._media_server.media_server_info.name
+                    if self._media_server.media_server_info
+                    else "Unknown"
+                )
+                formatted = str(err)
+                detail = f" - {formatted}" if formatted else ""
+                _LOGGER.debug(
+                    "[%s] Update failure due to %s%s", n, type(err).__name__, detail
+                )
             raise UpdateFailed from err
