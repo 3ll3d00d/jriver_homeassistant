@@ -568,7 +568,7 @@ async def test_reconfigure_options(
     )
     with (
         patch(
-            "custom_components.jriver.MediaServerUpdateCoordinator._async_update_data",
+            "custom_components.jriver.coordinator.MediaServerUpdateCoordinator._async_update_data",
             return_value=MediaServerData(server_info=MediaServerInfo({})),
         ),
         patch("custom_components.jriver._get_ms", return_value=media_server),

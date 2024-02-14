@@ -20,6 +20,16 @@ def mock_setup_entry() -> Generator[AsyncMock, None, None]:
         yield mock_setup_entry
 
 
+@pytest.fixture(autouse=True)
+def bypass_setup_fixture():
+    """Prevent setup."""
+    with patch(
+            "custom_components.jriver.async_setup_entry",
+            return_value=True,
+    ):
+        yield
+
+
 @pytest.fixture(params=["31.0.10", "32.0.6"])
 def media_server(request) -> MediaServer:
     """Mock a MediaServer."""
@@ -30,4 +40,4 @@ def media_server(request) -> MediaServer:
     type(ms).media_server_info = PropertyMock(return_value=msi)
     type(msi).name = PropertyMock(return_value="localhost")
     type(msi).version = PropertyMock(return_value=request.param)
-    return ms
+    yield ms
