@@ -26,6 +26,19 @@ seek_relative:
       selector:
         number:
 
+adjust_volume:
+  target:
+    entity:
+      integration: jriver
+      domain: media_player
+  fields:
+    delta:
+      example: -5
+      selector:
+        number:
+          min: -100
+          max: 100
+
 activate_zone:
   target:
     entity:

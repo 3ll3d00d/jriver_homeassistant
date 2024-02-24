@@ -103,6 +103,15 @@ MC_SEEK_RELATIVE_SCHEMA = {
 }
 
 
+SERVICE_ADJUST_VOLUME = "adjust_volume"
+
+ATTR_DELTA = "delta"
+
+MC_ADJUST_VOLUME_SCHEMA = {
+    vol.Required(ATTR_DELTA): vol.Coerce(int),
+}
+
+
 def find_matching_config_entries_for_key_value(hass, key, value):
     """Search existing config entries for a match."""
     for entry in hass.config_entries.async_entries(DOMAIN):
@@ -169,6 +178,9 @@ async def async_setup_entry(
     )
     platform.async_register_entity_service(
         SERVICE_SEEK_RELATIVE, MC_SEEK_RELATIVE_SCHEMA, "async_seek_relative"
+    )
+    platform.async_register_entity_service(
+        SERVICE_ADJUST_VOLUME, MC_ADJUST_VOLUME_SCHEMA, "async_adjust_volume"
     )
 
     data = hass.data[DOMAIN][config_entry.entry_id]
@@ -582,6 +594,14 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
         await self._media_server.media_seek(
             int(seek_duration * 1000), zone=self._target_zone
         )
+
+    @cmd
+    async def async_adjust_volume(self, delta: int):
+        """Adjust volume by the given amount."""
+        if delta > 0:
+            await self._media_server.volume_up(delta / 100, zone=self._target_zone)
+        elif delta < 0:
+            await self._media_server.volume_down(delta / 100, zone=self._target_zone)
 
     async def async_browse_media(
         self,

@@ -149,6 +149,16 @@
         }
       }
     },
+    "adjust_volume": {
+      "name": "Relative volume adjustment",
+      "description": "Change volume up or down by a given amount. ",
+      "fields": {
+        "delta": {
+          "name": "Volume adjustment",
+          "description": "Amount (%age) to change volume by."
+        }
+      }
+    },
     "send_mcc": {
       "name": "Send MCC command",
       "description": "Sends an MCC command. ",

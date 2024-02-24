@@ -139,6 +139,16 @@
             },
             "name": "Add to playlist"
         },
+        "adjust_volume": {
+            "description": "Change volume up or down by a given amount. ",
+            "fields": {
+                "delta": {
+                    "description": "Amount (%age) to change volume by.",
+                    "name": "Volume adjustment"
+                }
+            },
+            "name": "Relative volume adjustment"
+        },
         "seek_relative": {
             "description": "Move forward or backward by the specified amount in seconds. ",
             "fields": {

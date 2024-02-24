@@ -10,5 +10,5 @@
   "issue_tracker": "https://github.com/3ll3d00d/jriver_homeassistant/issues",
   "loggers": ["hamcws"],
   "requirements": ["hamcws==0.1.31"],
-  "version": "0.2.2"
+  "version": "0.2.4"
 }
