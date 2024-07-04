@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jriver_homeassistant"
-version = "0.2.5"
+version = "0.2.6"
 description = "A custom Home Assistant integration for jriver"
 authors = ["3ll3d00d <mattkhan+jrha@gmail.com>"]
 license = "MIT"
