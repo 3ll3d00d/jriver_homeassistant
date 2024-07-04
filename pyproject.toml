@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "jriver_homeassistant"
-version = "0.2.4"
+version = "0.2.5"
 description = "A custom Home Assistant integration for jriver"
 authors = ["3ll3d00d <mattkhan+jrha@gmail.com>"]
 license = "MIT"
@@ -12,8 +12,8 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.13"
-homeassistant = "2024.2.3"
+python = ">=3.12,<3.13"
+homeassistant = "2024.7"
 hamcws = "*"
 aioitertools = "*"
 wakeonlan = "^3.1.0"

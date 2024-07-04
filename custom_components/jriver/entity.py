@@ -4,6 +4,7 @@ from functools import wraps
 import logging
 from typing import Any, Concatenate, ParamSpec, TypeVar
 
+from components.jriver import MediaServerUpdateCoordinator
 from hamcws import CannotConnectError
 
 from homeassistant.auth import InvalidAuthError
@@ -11,7 +12,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import MediaServerUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 

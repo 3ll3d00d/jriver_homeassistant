@@ -1,9 +1,10 @@
 """The JRiver Media Center (https://jriver.com/) integration."""
+
 from __future__ import annotations
 
+import asyncio
 import logging
 
-from aioitertools import asyncio
 from hamcws import (
     MediaServer,
     MediaSubType as mc_MediaSubType,
@@ -186,8 +187,7 @@ def _get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
         ssl=entry.data[CONF_SSL],
         session=async_get_clientsession(hass),
     )
-    ms = MediaServer(conn)
-    return ms
+    return MediaServer(conn)
 
 
 async def reconfigure_entry(hass: HomeAssistant, entry: ConfigEntry):

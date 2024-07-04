@@ -1,4 +1,5 @@
 """Support for media browsing."""
+
 import contextlib
 import logging
 
@@ -74,7 +75,9 @@ async def browse_nodes(
     if not parent_id:
         parent_id = "-1"
     parent_media_id = parent_id
-    container_media_class = MediaClass.DIRECTORY
+    mt: MediaType | str | None
+    mc: MediaClass | str | None
+    container_media_class: MediaClass = MediaClass.DIRECTORY
     container_media_type: MediaType | str = "library"
 
     if parent_id == "-1":
@@ -91,6 +94,9 @@ async def browse_nodes(
             if classification:
                 container_media_class = classification[0]
                 container_media_type = str(classification[1])
+        elif path_tokens[0] == "Playlists":
+            container_media_class = MediaClass.PLAYLIST
+            container_media_type = MediaType.PLAYLIST
     else:
         raise ValueError(f"Unknown media_content_id format {parent_id}")
 
@@ -102,20 +108,23 @@ async def browse_nodes(
     if nodes:
         items = []
         for name, node_id in nodes.items():
-            child_path = path_tokens + [name]
-            browse_path = search_for_path(browse_paths, child_path)
-            if not browse_path:
-                continue
-            classification = _classify_browse_path(browse_path)
-            mt: MediaType | str | None = None
-            if classification:
-                mc, mt = classification
-            else:
+            child_path = [*path_tokens, name]
+            if container_media_class == MediaClass.PLAYLIST:
+                mt = container_media_type
                 mc = container_media_class
-                try:
-                    mt = MediaType[container_media_type]
-                except KeyError:
-                    mt = container_media_type
+            else:
+                browse_path = search_for_path(browse_paths, child_path)
+                if not browse_path:
+                    continue
+                classification = _classify_browse_path(browse_path)
+                if classification:
+                    mc, mt = classification
+                else:
+                    mc = container_media_class
+                    try:
+                        mt = MediaType[container_media_type]
+                    except KeyError:
+                        mt = container_media_type
             vals = {
                 "id": node_id,
                 "media_id": f"N|{node_id}|{' > '.join(child_path)}",
@@ -172,8 +181,7 @@ async def browse_nodes(
             # If domain is None, it's overview of available sources
             if item.domain is None:
                 if item.children:
-                    for c in item.children:
-                        children.append(c)
+                    children = [*children, *item.children]
             else:
                 children.append(item)
 

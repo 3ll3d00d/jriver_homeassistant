@@ -1,4 +1,5 @@
 """A DataUpdateCoordinator for J River."""
+
 from __future__ import annotations
 
 import asyncio
@@ -21,6 +22,7 @@ from hamcws import (
     convert_browse_rules,
 )
 
+from homeassistant.components.media_player import MediaType
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -66,7 +68,7 @@ class MediaServerData:
         self, vals: dict[str, V], target_zone: str | None
     ) -> V | None:
         if target_zone:
-            return vals.get(target_zone, None)
+            return vals.get(target_zone)
         active_zone = next((z for z in self.zones if z.active), None)
         if not active_zone and self.zones:
             active_zone = self.zones[0]
@@ -101,7 +103,13 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
     ) -> list[BrowsePath]:
         async def _get_paths() -> list[BrowsePath]:
             try:
-                return convert_browse_rules(await self._media_server.get_browse_rules())
+                browse_rules = convert_browse_rules(
+                    await self._media_server.get_browse_rules()
+                )
+                playlist_path = BrowsePath("Playlists")
+                playlist_path.media_types.append(MediaType.PLAYLIST)
+                browse_rules.append(playlist_path)
+                return browse_rules
             finally:
                 self._last_path_refresh = dt_util.utcnow()
 
@@ -195,7 +203,6 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
                     new_zone,
                 )
 
-            return new_data
         except InvalidAuthError as err:
             raise ConfigEntryAuthFailed from err
         except (CannotConnectError, MediaServerError, InvalidRequestError) as err:
@@ -211,3 +218,5 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
                     "[%s] Update failure due to %s%s", n, type(err).__name__, detail
                 )
             raise UpdateFailed from err
+        else:
+            return new_data
