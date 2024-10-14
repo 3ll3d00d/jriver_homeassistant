@@ -1,0 +1,22 @@
+{
+  "services": {
+    "add_to_playlist": {
+      "service": "mdi:playlist-plus"
+    },
+    "seek_relative": {
+      "service": "mdi:arrow-expand-horizontal"
+    },
+    "adjust_volume": {
+      "service": "mdi:volume-source"
+    },
+    "activate_zone": {
+      "service": "mdi:map-clock"
+    },
+    "send_mcc": {
+      "service": "mdi:send"
+    },
+    "wake": {
+      "service": "mdi:power-on"
+    }
+  }
+}

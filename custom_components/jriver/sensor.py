@@ -27,9 +27,9 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+        hass: HomeAssistant,
+        config_entry: ConfigEntry,
+        async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the JRiver Media Center sensor platform from a config entry."""
     data = hass.data[DOMAIN][config_entry.entry_id]
@@ -37,23 +37,21 @@ async def async_setup_entry(
     name = data[DATA_SERVER_NAME]
     ms: MediaServer = data[DATA_MEDIA_SERVER]
     uid_prefix = config_entry.unique_id or config_entry.entry_id
-    coordinator: MediaServerUpdateCoordinator = data[DATA_COORDINATOR]
-    await coordinator.async_config_entry_first_refresh()
 
     entities = [
-        JRiverActiveZoneSensor(
-            data[DATA_COORDINATOR], f"{uid_prefix}_activezone", f"{name} (Active Zone)"
-        )
-    ] + [
-        JRiverPlayingNowSensor(
-            data[DATA_COORDINATOR],
-            f"{uid_prefix}_{z}_playingnow",
-            f"{name} - {z} (Playing Now)",
-            z.name,
-            extra_fields,
-        )
-        for z in await ms.get_zones()
-    ]
+                   JRiverActiveZoneSensor(
+                       data[DATA_COORDINATOR], f"{uid_prefix}_activezone", f"{name} (Active Zone)"
+                   )
+               ] + [
+                   JRiverPlayingNowSensor(
+                       data[DATA_COORDINATOR],
+                       f"{uid_prefix}_{z}_playingnow",
+                       f"{name} - {z} (Playing Now)",
+                       z.name,
+                       extra_fields,
+                   )
+                   for z in await ms.get_zones()
+               ]
 
     async_add_entities(entities)
 
@@ -81,12 +79,12 @@ class JRiverPlayingNowSensor(MediaServerEntity, SensorEntity):
     _attr_name = None
 
     def __init__(
-        self,
-        coordinator: MediaServerUpdateCoordinator,
-        unique_id: str,
-        name: str,
-        zone_name: str,
-        extra_fields: list[str],
+            self,
+            coordinator: MediaServerUpdateCoordinator,
+            unique_id: str,
+            name: str,
+            zone_name: str,
+            extra_fields: list[str],
     ) -> None:
         """Init the sensor."""
         super().__init__(coordinator, unique_id, name)
@@ -110,6 +108,6 @@ class JRiverPlayingNowSensor(MediaServerEntity, SensorEntity):
             return {}
         return {
             "is_active": self.coordinator.data.get_active_zone_name()
-            == self._zone_name,
+                         == self._zone_name,
             **info.as_dict(),
         }

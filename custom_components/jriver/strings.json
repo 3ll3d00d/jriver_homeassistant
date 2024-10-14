@@ -31,13 +31,13 @@
         }
       },
       "paths": {
-        "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually. ",
+        "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually.",
         "data": {
           "browse_paths": "View Paths"
         }
       },
       "zones": {
-        "description": "Choose whether to expose zones as separate devices. ",
+        "description": "Choose whether to expose zones as separate devices.",
         "data": {
           "per_zone": "Show zones as separate devices"
         }
@@ -77,7 +77,7 @@
   "options": {
     "step": {
       "init": {
-        "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually. ",
+        "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually.",
         "data": {
           "browse_paths": "View Paths"
         }
@@ -117,7 +117,7 @@
   "services": {
     "add_to_playlist": {
       "name": "Add to playlist",
-      "description": "Adds library items to the Playing Now playlist. Must provide either a query or a playlist. ",
+      "description": "Adds library items to the Playing Now playlist. Must provide either a query or a playlist.",
       "fields": {
         "query": {
           "name": "Search Query",
@@ -131,7 +131,7 @@
     },
     "activate_zone": {
       "name": "Set Active Zone",
-      "description": "Sets the active zone. ",
+      "description": "Sets the active zone.",
       "fields": {
         "zone_name": {
           "name": "Zone Name",
@@ -141,7 +141,7 @@
     },
     "seek_relative": {
       "name": "Relative position seek",
-      "description": "Move forward or backward by the specified amount in seconds. ",
+      "description": "Move forward or backward by the specified amount in seconds.",
       "fields": {
         "seek_duration": {
           "name": "Seek amount",
@@ -151,7 +151,7 @@
     },
     "adjust_volume": {
       "name": "Relative volume adjustment",
-      "description": "Change volume up or down by a given amount. ",
+      "description": "Change volume up or down by a given amount.",
       "fields": {
         "delta": {
           "name": "Volume adjustment",
@@ -161,7 +161,7 @@
     },
     "send_mcc": {
       "name": "Send MCC command",
-      "description": "Sends an MCC command. ",
+      "description": "Sends an MCC command.",
       "fields": {
         "command": {
           "name": "MCC command id",
@@ -183,7 +183,7 @@
     },
     "wake": {
       "name": "Use Wake On Lan to wake the MediaServer",
-      "description": "Sends a WOL magic packet. ",
+      "description": "Sends a WOL magic packet.",
       "fields": {
         "entity_id": {
           "name": "entity id",
