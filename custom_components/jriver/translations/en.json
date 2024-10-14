@@ -37,7 +37,7 @@
                 "data": {
                     "browse_paths": "View Paths"
                 },
-                "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually. "
+                "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually."
             },
             "select_playback_fields": {
                 "data": {
@@ -70,7 +70,7 @@
                 "data": {
                     "per_zone": "Show zones as separate devices"
                 },
-                "description": "Choose whether to expose zones as separate devices. "
+                "description": "Choose whether to expose zones as separate devices."
             }
         }
     },
@@ -103,7 +103,7 @@
                 "data": {
                     "browse_paths": "View Paths"
                 },
-                "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually. "
+                "description": "Please select the remote views that you want to be able to browse in Home Assistant. These can be found in the \"Customize views for JRemote, Gizmo and Panel\" configuration in Options > Media Network > Advanced. Upgrade to MC32 to remove the need to provide this information manually."
             },
             "macs": {
                 "data": {
@@ -116,7 +116,7 @@
     },
     "services": {
         "activate_zone": {
-            "description": "Sets the active zone. ",
+            "description": "Sets the active zone.",
             "fields": {
                 "zone_name": {
                     "description": "A JRiver zone name",
@@ -126,7 +126,7 @@
             "name": "Set Active Zone"
         },
         "add_to_playlist": {
-            "description": "Adds library items to the Playing Now playlist. Must provide either a query or a playlist. ",
+            "description": "Adds library items to the Playing Now playlist. Must provide either a query or a playlist.",
             "fields": {
                 "playlist_path": {
                     "description": "A path to a playlist to play.",
@@ -140,7 +140,7 @@
             "name": "Add to playlist"
         },
         "adjust_volume": {
-            "description": "Change volume up or down by a given amount. ",
+            "description": "Change volume up or down by a given amount.",
             "fields": {
                 "delta": {
                     "description": "Amount (%age) to change volume by.",
@@ -150,7 +150,7 @@
             "name": "Relative volume adjustment"
         },
         "seek_relative": {
-            "description": "Move forward or backward by the specified amount in seconds. ",
+            "description": "Move forward or backward by the specified amount in seconds.",
             "fields": {
                 "seek_duration": {
                     "description": "Number of seconds to seek forwards or backwards.",
@@ -160,7 +160,7 @@
             "name": "Relative position seek"
         },
         "send_mcc": {
-            "description": "Sends an MCC command. ",
+            "description": "Sends an MCC command.",
             "fields": {
                 "block": {
                     "description": "true to block, false to return immediately",
@@ -182,7 +182,7 @@
             "name": "Send MCC command"
         },
         "wake": {
-            "description": "Sends a WOL magic packet. ",
+            "description": "Sends a WOL magic packet.",
             "fields": {
                 "entity_id": {
                     "description": "the target media server",
