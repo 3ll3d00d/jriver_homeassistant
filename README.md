@@ -8,9 +8,7 @@ Home Assistant integration for interacting with your JRiver Media Center.
 
 You can install this component through [HACS](https://hacs.xyz/) so make sure HACS is installed.
 
-Next, visit the HACS Integrations pane and go to _Custom Repositories_ via the advanced menu (the 3 dots in the top right). Add `https://github.com/3ll3d00d/jriver_homeassistant.git` and set category to `Integration`.
-
-Finally, click this link to complete the installation.
+Click this link to complete the installation.
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=3ll3d00d&repository=jriver_homeassistant)
 
