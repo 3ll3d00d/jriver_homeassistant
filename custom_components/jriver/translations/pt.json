@@ -1,0 +1,195 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "O dispositivo já está configurado",
+      "cannot_connect": "Falha ao ligar",
+      "invalid_auth": "Autenticação inválida",
+      "unknown": "Erro inesperado"
+    },
+    "error": {
+      "cannot_connect": "Falha ao ligar",
+      "invalid_access_key": "Não é possível resolver a Chave de Acesso",
+      "invalid_auth": "Autenticação inválida",
+      "invalid_mac": "Endereço MAC inválido, deve ser 6 pares de dígitos hexadecimais separados por :",
+      "invalid_paths": "Formato do caminho está incorreto.",
+      "no_mac_addresses": "Deve fornecer pelo menos um endereço MAC ou desativar o suporte a WOL.",
+      "no_paths": "Nenhum caminho de visualização fornecido",
+      "no_zones": "Deve selecionar pelo menos uma zona.",
+      "timeout_connect": "Tempo limite ao estabelecer ligação",
+      "unknown": "Erro inesperado"
+    },
+    "step": {
+      "credentials": {
+        "data": {
+          "password": "Palavra-passe",
+          "username": "Nome de Utilizador"
+        },
+        "description": "Introduza o nome de utilizador e a palavra-passe do seu JRiver Media Server. Estes podem ser encontrados em Opções > Rede de Mídia > Autenticação"
+      },
+      "macs": {
+        "data": {
+          "mac": "Endereço MAC",
+          "use_wol": "Configurar o serviço remote.wake? (requer pelo menos 1 endereço MAC)"
+        },
+        "description": "Selecione os endereços MAC que devem ser utilizados para o Wake on LAN.\nRequer a integração Wake on LAN do Home Assistant."
+      },
+      "paths": {
+        "data": {
+          "browse_paths": "Caminhos de Visualização"
+        },
+        "description": "Selecione as visualizações remotas que deseja poder navegar no Home Assistant. Estas podem ser encontradas na configuração \"Personalizar visualizações para JRemote, Gizmo e Painel\" em Opções > Rede de Mídia > Avançado. Atualize para MC32 para remover a necessidade de fornecer esta informação manualmente."
+      },
+      "select_playback_fields": {
+        "data": {
+          "extra_fields": "Nome do Campo"
+        },
+        "description": "Especifique campos adicionais da biblioteca para expor como atributos nos sensores de reprodução atual."
+      },
+      "select_zones": {
+        "data": {
+          "zone_names": "Zonas"
+        },
+        "description": "Escolha as zonas que deseja expor como dispositivo."
+      },
+      "user": {
+        "data": {
+          "api_key": "Chave API",
+          "host": "Host",
+          "name": "Nome",
+          "port": "Porta",
+          "ssl": "Usa um certificado SSL"
+        },
+        "data_description": {
+          "api_key": "A chave de acesso mostrada em Opções > Rede de Mídia.",
+          "host": "O nome do host ou endereço IP do sistema que hospeda o seu JRiver Media Server.",
+          "name": "Um nome memorável para o servidor, será predefinido para o nome do host se descoberto através de uma chave de acesso"
+        },
+        "description": "Introduza uma chave de acesso ou host e porta.\n\"Usar Rede de Mídia para partilhar esta biblioteca e ativar DLNA\" deve estar ativado em Opções > Rede de Mídia."
+      },
+      "zones": {
+        "data": {
+          "per_zone": "Mostrar zonas como dispositivos separados"
+        },
+        "description": "Escolha se deseja expor as zonas como dispositivos separados."
+      }
+    }
+  },
+  "options": {
+    "abort": {
+      "already_configured": "O dispositivo já está configurado",
+      "cannot_connect": "Falha ao ligar",
+      "invalid_auth": "Autenticação inválida",
+      "unknown": "Erro inesperado"
+    },
+    "error": {
+      "cannot_connect": "Falha ao ligar",
+      "invalid_access_key": "Não é possível resolver a Chave de Acesso",
+      "invalid_auth": "Autenticação inválida",
+      "invalid_mac": "Endereço MAC inválido, deve ser 6 pares de dígitos hexadecimais separados por :",
+      "invalid_paths": "Formato do caminho está incorreto.",
+      "no_mac_addresses": "Deve fornecer pelo menos um endereço MAC ou desativar o suporte a WOL.",
+      "no_paths": "Nenhum caminho de visualização fornecido",
+      "timeout_connect": "Tempo limite ao estabelecer ligação",
+      "unknown": "Erro inesperado"
+    },
+    "step": {
+      "fields": {
+        "data": {
+          "extra_fields": "Nome do Campo"
+        },
+        "description": "Especifique campos adicionais da biblioteca para expor como atributos nos sensores de reprodução atual."
+      },
+      "init": {
+        "data": {
+          "browse_paths": "Caminhos de Visualização"
+        },
+        "description": "Selecione as visualizações remotas que deseja poder navegar no Home Assistant. Estas podem ser encontradas na configuração \"Personalizar visualizações para JRemote, Gizmo e Painel\" em Opções > Rede de Mídia > Avançado. Atualize para MC32 para remover a necessidade de fornecer esta informação manualmente."
+      },
+      "macs": {
+        "data": {
+          "mac": "Endereço MAC",
+          "use_wol": "Ativar o serviço remote.wake."
+        },
+        "description": "Selecione os endereços MAC que devem ser utilizados para o Wake on LAN.\nRequer a integração Wake on LAN do Home Assistant."
+      }
+    }
+  },
+  "services": {
+    "activate_zone": {
+      "description": "Define a zona ativa.",
+      "fields": {
+        "zone_name": {
+          "description": "Um nome de zona JRiver",
+          "name": "Nome da Zona"
+        }
+      },
+      "name": "Definir Zona Ativa"
+    },
+    "add_to_playlist": {
+      "description": "Adiciona itens da biblioteca à lista de reprodução atual. Deve fornecer uma consulta ou uma lista de reprodução.",
+      "fields": {
+        "playlist_path": {
+          "description": "Um caminho para uma lista de reprodução a ser reproduzida.",
+          "name": "Caminho da Lista de Reprodução"
+        },
+        "query": {
+          "description": "Uma expressão de pesquisa JRiver conforme https://wiki.jriver.com/index.php/Search_Language",
+          "name": "Consulta de Pesquisa"
+        }
+      },
+      "name": "Adicionar à lista de reprodução"
+    },
+    "adjust_volume": {
+      "description": "Altera o volume para cima ou para baixo por um valor especificado.",
+      "fields": {
+        "delta": {
+          "description": "Quantidade (%) para alterar o volume.",
+          "name": "Ajuste de volume"
+        }
+      },
+      "name": "Ajuste relativo do volume"
+    },
+    "seek_relative": {
+      "description": "Avança ou retrocede pela quantidade especificada em segundos.",
+      "fields": {
+        "seek_duration": {
+          "description": "Número de segundos para avançar ou retroceder.",
+          "name": "Quantidade de avanço"
+        }
+      },
+      "name": "Avanço relativo da posição"
+    },
+    "send_mcc": {
+      "description": "Envia um comando MCC.",
+      "fields": {
+        "block": {
+          "description": "true para bloquear, false para retornar imediatamente",
+          "name": "Controla se a chamada é bloqueante"
+        },
+        "command": {
+          "description": "Um comando MCC",
+          "name": "ID do comando MCC"
+        },
+        "parameter": {
+          "description": "Parâmetro opcional",
+          "name": "Parâmetro para um comando MCC"
+        },
+        "zone_name": {
+          "description": "Uma zona do Media Server",
+          "name": "Nome da zona de destino"
+        }
+      },
+      "name": "Enviar comando MCC"
+    },
+    "wake": {
+      "description": "Envia um pacote mágico WOL.",
+      "fields": {
+        "entity_id": {
+          "description": "o servidor de mídia alvo",
+          "name": "ID da entidade"
+        }
+      },
+      "name": "Usar Wake On Lan para ativar o MediaServer"
+    }
+  }
+}
