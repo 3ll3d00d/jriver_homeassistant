@@ -38,20 +38,37 @@ async def async_setup_entry(
     ms: MediaServer = data[DATA_MEDIA_SERVER]
     uid_prefix = config_entry.unique_id or config_entry.entry_id
 
-    entities = [
-                   JRiverActiveZoneSensor(
-                       data[DATA_COORDINATOR], f"{uid_prefix}_activezone", f"{name} (Active Zone)"
-                   )
-               ] + [
-                   JRiverPlayingNowSensor(
-                       data[DATA_COORDINATOR],
-                       f"{uid_prefix}_{z}_playingnow",
-                       f"{name} - {z} (Playing Now)",
-                       z.name,
-                       extra_fields,
-                   )
-                   for z in await ms.get_zones()
-               ]
+    entities: list[SensorEntity] = [
+        JRiverActiveZoneSensor(
+            data[DATA_COORDINATOR], f"{uid_prefix}_activezone", f"{name} (Active Zone)"
+        )
+    ]
+
+    zones = await ms.get_zones()
+    for z in zones:
+        entities.extend(
+            [
+                JRiverPlayingNowSensor(
+                    data[DATA_COORDINATOR],
+                    f"{uid_prefix}_{z}_playingnow",
+                    f"{name} - {z} (Playing Now)",
+                    z.name,
+                    extra_fields,
+                ),
+                JRiverAudioPlayingDirectSensor(
+                    data[DATA_COORDINATOR],
+                    f"{uid_prefix}_{z}_audiodirect",
+                    f"{name} - {z} (Audio Is Direct)",
+                    z.name,
+                ),
+                JRiverPlaylistSensor(
+                    data[DATA_COORDINATOR],
+                    f"{uid_prefix}_{z}_playlist",
+                    f"{name} - {z} (Playlist)",
+                    z.name,
+                ),
+            ]
+        )
 
     async_add_entities(entities)
 
@@ -111,3 +128,64 @@ class JRiverPlayingNowSensor(MediaServerEntity, SensorEntity):
                          == self._zone_name,
             **info.as_dict(),
         }
+
+
+class JRiverAudioPlayingDirectSensor(MediaServerEntity, SensorEntity):
+    """Exposes whether the given zone is playing direct."""
+
+    _attr_name = None
+
+    def __init__(
+            self,
+            coordinator: MediaServerUpdateCoordinator,
+            unique_id: str,
+            name: str,
+            zone_name: str,
+    ) -> None:
+        """Init the sensor."""
+        super().__init__(coordinator, unique_id, name)
+        self._zone_name = zone_name
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        info = self.coordinator.data.get_audio_path_is_direct(self._zone_name)
+        if not info:
+            return
+        self._attr_native_value = info.is_direct
+        self.async_write_ha_state()
+
+
+class JRiverPlaylistSensor(MediaServerEntity, SensorEntity):
+    """Exposes the playlist in a given zone."""
+
+    _attr_name = None
+
+    def __init__(
+            self,
+            coordinator: MediaServerUpdateCoordinator,
+            unique_id: str,
+            name: str,
+            zone_name: str,
+    ) -> None:
+        """Init the sensor."""
+        super().__init__(coordinator, unique_id, name)
+        self._zone_name = zone_name
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        info = self.coordinator.data.get_playlist(self._zone_name)
+        if not info:
+            self._attr_native_value = False
+            return
+        self._attr_native_value = True
+        self.async_write_ha_state()
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any]:
+        """Return the state attributes."""
+        info = self.coordinator.data.get_playlist(self._zone_name)
+        if not info:
+            return {}
+        return {"entries": info}

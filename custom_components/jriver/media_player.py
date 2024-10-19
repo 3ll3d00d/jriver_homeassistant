@@ -1,4 +1,5 @@
 """Support for interfacing with the JRiver MCWS API."""
+
 from __future__ import annotations
 
 import asyncio
@@ -18,7 +19,7 @@ import voluptuous as vol
 
 from homeassistant.components import media_source
 from homeassistant.components.media_player import (
-    PLATFORM_SCHEMA,
+    PLATFORM_SCHEMA as MEDIA_PLAYER_PLATFORM_SCHEMA,
     BrowseError,
     BrowseMedia,
     MediaPlayerEntity,
@@ -41,7 +42,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType, VolDictType
 
 from . import MediaServerUpdateCoordinator, _translate_to_media_type
 from .browse_media import browse_nodes, media_source_content_filter
@@ -68,7 +69,7 @@ _LOGGER = logging.getLogger(__name__)
 
 CONF_TCP_PORT = "tcp_port"
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend(
     {
         vol.Required(CONF_HOST): cv.string,
         vol.Optional(CONF_NAME): cv.string,
@@ -88,7 +89,7 @@ SERVICE_ADD_MEDIA = "add_to_playlist"
 ATTR_PLAYLIST_PATH = "playlist_path"
 ATTR_QUERY = "play_query"
 
-MC_ADD_MEDIA_SCHEMA = {
+MC_ADD_MEDIA_SCHEMA: VolDictType = {
     vol.Optional(ATTR_PLAYLIST_PATH): cv.string,
     vol.Optional(ATTR_QUERY): cv.string,
 }
@@ -98,7 +99,7 @@ SERVICE_SEEK_RELATIVE = "seek_relative"
 
 ATTR_SEEK_DURATION = "seek_duration"
 
-MC_SEEK_RELATIVE_SCHEMA = {
+MC_SEEK_RELATIVE_SCHEMA: VolDictType = {
     vol.Required(ATTR_SEEK_DURATION): vol.Coerce(float),
 }
 
@@ -107,7 +108,7 @@ SERVICE_ADJUST_VOLUME = "adjust_volume"
 
 ATTR_DELTA = "delta"
 
-MC_ADJUST_VOLUME_SCHEMA = {
+MC_ADJUST_VOLUME_SCHEMA: VolDictType = {
     vol.Required(ATTR_DELTA): vol.Coerce(int),
 }
 
