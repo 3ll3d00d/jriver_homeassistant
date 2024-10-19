@@ -9,6 +9,6 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/3ll3d00d/jriver_homeassistant/issues",
   "loggers": ["hamcws"],
-  "requirements": ["hamcws==0.2.4"],
-  "version": "0.3.0"
+  "requirements": ["hamcws==0.2.5"],
+  "version": "0.3.1"
 }
