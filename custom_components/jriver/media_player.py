@@ -469,7 +469,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
     @cmd
     async def async_media_play(self) -> None:
         """Play media."""
-        await self._media_server.play(zone=self._target_zone)
+        await self._media_server.play_pause(zone=self._target_zone)
 
     @cmd
     async def async_media_pause(self) -> None:
