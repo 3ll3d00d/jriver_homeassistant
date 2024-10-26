@@ -94,7 +94,7 @@ async def browse_nodes(
             if classification:
                 container_media_class = classification[0]
                 container_media_type = str(classification[1])
-        elif path_tokens[0] == "Playlists":
+        elif path_tokens[0] == "Playlists" or path_tokens[0] == 'Playing Now':
             container_media_class = MediaClass.PLAYLIST
             container_media_type = MediaType.PLAYLIST
     else:

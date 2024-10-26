@@ -119,6 +119,10 @@ class MediaServerUpdateCoordinator(DataUpdateCoordinator[MediaServerData]):
                 playlist_path = BrowsePath("Playlists")
                 playlist_path.media_types.append(MediaType.PLAYLIST)
                 browse_rules.append(playlist_path)
+
+                playing_now_path = BrowsePath("Playing Now")
+                playing_now_path.media_types.append(MediaType.PLAYLIST)
+                browse_rules.append(playing_now_path)
                 return browse_rules
             finally:
                 self._last_path_refresh = dt_util.utcnow()

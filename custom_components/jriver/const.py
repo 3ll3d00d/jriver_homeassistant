@@ -45,6 +45,7 @@ MC_FIELD_TO_HA_MEDIATYPE: dict[str, str] = {
     "Video": "VIDEO",
     "Images": "IMAGE",
     "Playlists": "PLAYLIST",
+    "Playing Now": "PLAYLIST",
     "Shows": "TVSHOW",
     "Series": "TVSHOW",
     "Genre": "GENRE",
