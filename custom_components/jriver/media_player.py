@@ -87,7 +87,7 @@ PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend(
 SERVICE_ADD_MEDIA = "add_to_playlist"
 
 ATTR_PLAYLIST_PATH = "playlist_path"
-ATTR_QUERY = "play_query"
+ATTR_QUERY = "query"
 
 MC_ADD_MEDIA_SCHEMA: VolDictType = {
     vol.Optional(ATTR_PLAYLIST_PATH): cv.string,
