@@ -41,6 +41,9 @@ async def async_setup_entry(
     entities: list[SensorEntity] = [
         JRiverActiveZoneSensor(
             data[DATA_COORDINATOR], f"{uid_prefix}_activezone", f"{name} (Active Zone)"
+        ),
+        JRiverUISensor(
+            data[DATA_COORDINATOR], f"{uid_prefix}_uimode", f"{name} (UI Mode)"
         )
     ]
 
@@ -189,3 +192,20 @@ class JRiverPlaylistSensor(MediaServerEntity, SensorEntity):
         if not info:
             return {}
         return {"entries": info}
+
+
+class JRiverUISensor(MediaServerEntity, SensorEntity):
+    """Exposes the state of the UI."""
+
+    _attr_name = None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._attr_native_value = self.coordinator.data.view_mode.name
+        self.async_write_ha_state()
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any]:
+        """Return the state attributes."""
+        return {"id": self.coordinator.data.view_mode.value}
