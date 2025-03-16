@@ -1,22 +1,26 @@
-[tool.poetry]
+[project]
 name = "jriver_homeassistant"
-version = "0.3.6"
+version = "0.3.7"
 description = "A custom Home Assistant integration for jriver"
-authors = ["3ll3d00d <mattkhan+jrha@gmail.com>"]
+authors = [
+    { name = "3ll3d00d", email = "mattkhan+jrha@gmail.com" }
+]
 license = "MIT"
 readme = "README.md"
 homepage = "http://github.com/3ll3d00d/jriver_homeassistant"
 repository = "http://github.com/3ll3d00d/jriver_homeassistant"
+requires-python = ">=3.13, <3.14"
+dependencies = [
+    "homeassistant >=2024.10.2",
+    "hamcws",
+    "aioitertools",
+    "wakeonlan >=3.1.0, <4.0.0"
+]
+
+[tool.poetry]
 include = [
     "LICENSE",
 ]
-
-[tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-homeassistant = ">=2024.10.2"
-hamcws = "*"
-aioitertools = "*"
-wakeonlan = "^3.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
