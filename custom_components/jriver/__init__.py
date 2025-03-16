@@ -187,6 +187,7 @@ def _get_ms(hass: HomeAssistant, entry: ConfigEntry) -> MediaServer:
         password=entry.data[CONF_PASSWORD],
         ssl=entry.data[CONF_SSL],
         session=async_get_clientsession(hass),
+        timeout=20
     )
     return MediaServer(conn)
 
