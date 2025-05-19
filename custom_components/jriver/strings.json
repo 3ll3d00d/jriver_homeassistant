@@ -141,7 +141,7 @@
     },
     "play_playlist": {
       "name": "Plays a playlist",
-      "description": "Plays a named playlist. ",
+      "description": "Plays a named playlist.",
       "fields": {
         "playlist_path": {
           "name": "Playlist Path",

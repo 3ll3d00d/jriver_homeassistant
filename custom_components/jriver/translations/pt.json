@@ -139,6 +139,26 @@
       },
       "name": "Adicionar à lista de reprodução"
     },
+    "append_search_results_to_playlist": {
+      "description": "Adiciona itens da biblioteca à lista de reprodução atual..",
+      "fields": {
+        "query": {
+          "description": "Uma expressão de pesquisa JRiver conforme https://wiki.jriver.com/index.php/Search_Language",
+          "name": "Consulta de Pesquisa"
+        }
+      },
+      "name": "Adicionar pesquisa à lista de reprodução"
+    },
+    "play_playlist": {
+      "description": "Reproduz uma lista de reprodução nomeada.",
+      "fields": {
+        "playlist_path": {
+          "description": "TUm caminho para uma lista de reprodução a ser reproduzida.",
+          "name": "Caminho da Lista de Reprodução"
+        }
+      },
+      "name": "Reproduz uma lista de reprodução."
+    },
     "adjust_volume": {
       "description": "Altera o volume para cima ou para baixo por um valor especificado.",
       "fields": {

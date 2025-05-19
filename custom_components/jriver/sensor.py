@@ -11,7 +11,7 @@ from hamcws import MediaServer
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import MediaServerUpdateCoordinator
 from .const import (
@@ -30,7 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(
         hass: HomeAssistant,
         config_entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+        async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the JRiver Media Center sensor platform from a config entry."""
     data = hass.data[DOMAIN][config_entry.entry_id]

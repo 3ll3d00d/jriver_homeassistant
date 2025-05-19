@@ -14,7 +14,8 @@ from homeassistant.components.remote import RemoteEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import config_validation as cv, entity_platform
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import VolDictType
 
 from . import MediaServerUpdateCoordinator
 from .const import DATA_COORDINATOR, DATA_MEDIA_SERVER, DATA_SERVER_NAME, DOMAIN
@@ -27,7 +28,7 @@ SERVICE_ACTIVATE_ZONE = "activate_zone"
 
 ATTR_ZONE_NAME = "zone_name"
 
-MC_ACTIVATE_ZONE_SCHEMA = {
+MC_ACTIVATE_ZONE_SCHEMA: VolDictType = {
     vol.Required(ATTR_ZONE_NAME): cv.string,
 }
 
@@ -39,7 +40,7 @@ ATTR_MCC_PARAMETER = "parameter"
 ATTR_MCC_BLOCK = "block"
 ATTR_ZONE_NAME = "zone_name"
 
-MC_SEND_MCC_SCHEMA = {
+MC_SEND_MCC_SCHEMA: VolDictType = {
     vol.Required(ATTR_MCC_COMMAND): vol.All(
         vol.Coerce(int), vol.Range(min=10000, max=40000)
     ),
@@ -52,7 +53,7 @@ MC_SEND_MCC_SCHEMA = {
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the JRiver Media Center remote platform from a config entry."""
     platform = entity_platform.async_get_current_platform()

@@ -149,6 +149,26 @@
             },
             "name": "Relative volume adjustment"
         },
+        "append_search_results_to_playlist": {
+            "description": "Adds library items to the Playing Now playlist. Must provide either a search query.",
+            "fields": {
+                "query": {
+                    "description": "A JRiver search expression as per https://wiki.jriver.com/index.php/Search_Language",
+                    "name": "Search Query"
+                }
+            },
+            "name": "Append Search to playlist"
+        },
+        "play_playlist": {
+            "description": "Plays a named playlist.",
+            "fields": {
+                "playlist_path": {
+                    "description": "The playlist to play.",
+                    "name": "Playlist Path"
+                }
+            },
+            "name": "Plays a playlist"
+        },
         "seek_relative": {
             "description": "Move forward or backward by the specified amount in seconds.",
             "fields": {
