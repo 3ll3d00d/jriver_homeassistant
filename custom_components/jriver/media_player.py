@@ -85,6 +85,8 @@ PLATFORM_SCHEMA = MEDIA_PLAYER_PLATFORM_SCHEMA.extend(
 )
 
 SERVICE_ADD_MEDIA = "add_to_playlist"
+SERVICE_ADD_SEARCH = "append_search_results_to_playlist"
+SERVICE_PLAY_PLAYLIST = "play_playlist"
 
 ATTR_PLAYLIST_PATH = "playlist_path"
 ATTR_QUERY = "query"
@@ -92,6 +94,14 @@ ATTR_QUERY = "query"
 MC_ADD_MEDIA_SCHEMA: VolDictType = {
     vol.Optional(ATTR_PLAYLIST_PATH): cv.string,
     vol.Optional(ATTR_QUERY): cv.string,
+}
+
+MC_ADD_SEARCH_SCHEMA: VolDictType = {
+    vol.Required(ATTR_QUERY): cv.string,
+}
+
+MC_PLAY_PLAYLIST_SCHEMA: VolDictType = {
+    vol.Required(ATTR_PLAYLIST_PATH): cv.string
 }
 
 
@@ -587,6 +597,40 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
 
         _LOGGER.warning(
             "Service add_to_playlist requires either query or playlist_path to be set"
+        )
+
+    @cmd
+    async def async_append_search_results_to_playlist(
+        self, query: str | None
+    ):
+        """Add the results of a query to playing now.
+
+        Used by the exposed service "append_search_results_to_playlist"
+        """
+        if query:
+            await self._media_server.play_search(query, zone=self._target_zone, play_next=False)
+            return
+
+        _LOGGER.warning(
+            "Service append_search_results_to_playlist requires a query to be set"
+        )
+
+    @cmd
+    async def async_play_playlist(
+        self, playlist_path: str | None
+    ):
+        """plays a playlist.
+
+        Used by the exposed service "play_playlist"
+        """
+        if playlist_path and playlist_path.strip():
+            await self._media_server.play_playlist(
+                playlist_path.strip(), zone=self._target_zone
+            )
+            return
+
+        _LOGGER.warning(
+            "Service play_playlist requires a playlist_path to be set"
         )
 
     @cmd

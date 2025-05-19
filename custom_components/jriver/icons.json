@@ -3,6 +3,12 @@
     "add_to_playlist": {
       "service": "mdi:playlist-plus"
     },
+    "append_search_results_to_playlist": {
+      "service": "mdi:playlist-plus"
+    },
+    "play_playlist": {
+      "service": "mdi:playlist-play"
+    },
     "seek_relative": {
       "service": "mdi:arrow-expand-horizontal"
     },

@@ -110,6 +110,8 @@ A number of additional services are provided.
 
 #### jriver.add_to_playlist
 
+**THIS SERVICE IS DEPRECATED DUE TO MULTIPLE BUGS**
+
 Targets the `media_player` entity.
 
 [![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.add_to_playlist)
@@ -117,6 +119,26 @@ Targets the `media_player` entity.
 Requires one of two parameters:
 
 - query: a valid search expression
+- playlist_path
+
+#### jriver.append_search_results_to_playlist
+
+Targets the `media_player` entity and adds the results of the search to the end of current playing now list.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.append_search_results_to_playlist)
+
+Requires one parameter:
+
+- query: a valid search expression
+
+#### jriver.play_playlist
+
+Targets the `media_player` entity and starts playback of the named playlist.
+
+[![Open your Home Assistant instance and show your service developer tools.](https://my.home-assistant.io/badges/developer_call_service.svg)](https://my.home-assistant.io/redirect/developer_call_service/?service=jriver.append_search_results_to_playlist)
+
+Requires one parameter:
+
 - playlist_path
 
 #### jriver.relative_seek

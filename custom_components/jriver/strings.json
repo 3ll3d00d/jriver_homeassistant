@@ -129,6 +129,26 @@
         }
       }
     },
+    "append_search_results_to_playlist": {
+      "name": "Append Search to playlist",
+      "description": "Adds library items to the Playing Now playlist. Must provide either a search query.",
+      "fields": {
+        "query": {
+          "name": "Search Query",
+          "description": "A JRiver search expression as per https://wiki.jriver.com/index.php/Search_Language"
+        }
+      }
+    },
+    "play_playlist": {
+      "name": "Plays a playlist",
+      "description": "Plays a named playlist. ",
+      "fields": {
+        "playlist_path": {
+          "name": "Playlist Path",
+          "description": "The playlist to play."
+        }
+      }
+    },
     "activate_zone": {
       "name": "Set Active Zone",
       "description": "Sets the active zone.",

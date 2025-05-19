@@ -15,6 +15,28 @@ add_to_playlist:
       selector:
         text:
 
+append_search_results_to_playlist:
+  target:
+    entity:
+      integration: jriver
+      domain: media_player
+  fields:
+    query:
+      example: "[Album Artist (auto)]=[AIR] ~sort=[Date],[Album],[Track #]"
+      selector:
+        text:
+
+play_playlist:
+  target:
+    entity:
+      integration: jriver
+      domain: media_player
+  fields:
+    playlist_path:
+      example: Alarms\Morning\Wakeup
+      selector:
+        text:
+
 seek_relative:
   target:
     entity:

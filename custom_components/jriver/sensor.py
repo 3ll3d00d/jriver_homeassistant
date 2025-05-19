@@ -20,6 +20,7 @@ from .const import (
     DATA_MEDIA_SERVER,
     DATA_SERVER_NAME,
     DOMAIN,
+    DATA_ZONES,
 )
 from .entity import MediaServerEntity
 
@@ -35,6 +36,7 @@ async def async_setup_entry(
     data = hass.data[DOMAIN][config_entry.entry_id]
     extra_fields = data[DATA_EXTRA_FIELDS]
     name = data[DATA_SERVER_NAME]
+    allowed_zones = data[DATA_ZONES]
     ms: MediaServer = data[DATA_MEDIA_SERVER]
     uid_prefix = config_entry.unique_id or config_entry.entry_id
 
@@ -49,29 +51,30 @@ async def async_setup_entry(
 
     zones = await ms.get_zones()
     for z in zones:
-        entities.extend(
-            [
-                JRiverPlayingNowSensor(
-                    data[DATA_COORDINATOR],
-                    f"{uid_prefix}_{z}_playingnow",
-                    f"{name} - {z} (Playing Now)",
-                    z.name,
-                    extra_fields,
-                ),
-                JRiverAudioPlayingDirectSensor(
-                    data[DATA_COORDINATOR],
-                    f"{uid_prefix}_{z}_audiodirect",
-                    f"{name} - {z} (Audio Is Direct)",
-                    z.name,
-                ),
-                JRiverPlaylistSensor(
-                    data[DATA_COORDINATOR],
-                    f"{uid_prefix}_{z}_playlist",
-                    f"{name} - {z} (Playlist)",
-                    z.name,
-                ),
-            ]
-        )
+        if z in allowed_zones or allowed_zones is None:
+            entities.extend(
+                [
+                    JRiverPlayingNowSensor(
+                        data[DATA_COORDINATOR],
+                        f"{uid_prefix}_{z}_playingnow",
+                        f"{name} - {z} (Playing Now)",
+                        z.name,
+                        extra_fields,
+                    ),
+                    JRiverAudioPlayingDirectSensor(
+                        data[DATA_COORDINATOR],
+                        f"{uid_prefix}_{z}_audiodirect",
+                        f"{name} - {z} (Audio Is Direct)",
+                        z.name,
+                    ),
+                    JRiverPlaylistSensor(
+                        data[DATA_COORDINATOR],
+                        f"{uid_prefix}_{z}_playlist",
+                        f"{name} - {z} (Playlist)",
+                        z.name,
+                    ),
+                ]
+            )
 
     async_add_entities(entities)
 
