@@ -51,7 +51,7 @@ async def async_setup_entry(
 
     zones = await ms.get_zones()
     for z in zones:
-        if allowed_zones is None or z in allowed_zones:
+        if not allowed_zones or z.name in allowed_zones:
             entities.extend(
                 [
                     JRiverPlayingNowSensor(

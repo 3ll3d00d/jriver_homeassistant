@@ -188,7 +188,9 @@ async def async_setup_entry(
         SERVICE_ADD_MEDIA, MC_ADD_MEDIA_SCHEMA, "async_add_media_to_playlist"
     )
     platform.async_register_entity_service(
-        SERVICE_ADD_SEARCH, MC_ADD_SEARCH_SCHEMA, "async_append_search_results_to_playlist"
+        SERVICE_ADD_SEARCH,
+        MC_ADD_SEARCH_SCHEMA,
+        "async_append_search_results_to_playlist",
     )
     platform.async_register_entity_service(
         SERVICE_PLAY_PLAYLIST, MC_PLAY_PLAYLIST_SCHEMA, "async_play_playlist"
