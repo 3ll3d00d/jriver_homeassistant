@@ -466,16 +466,21 @@ class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self) -> None:
         """Initialize options flow."""
         self._library_fields: list[str] = []
-        self._browse_paths: list[BrowsePath] = self._get_existing(CONF_BROWSE_PATHS, [])
-        self._extra_fields: list[str] = self._get_existing(CONF_EXTRA_FIELDS, [])
-        self._mac_addresses: list[str] = self._get_existing(CONF_MAC, [])
-        self._use_wol: bool = self._get_existing(CONF_USE_WOL, True)
+        self._browse_paths: list[BrowsePath] = []
+        self._extra_fields: list[str] = []
+        self._mac_addresses: list[str] = []
+        self._use_wol: bool = True
         self._ms: MediaServer | str | None = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
+        self._browse_paths: list[BrowsePath] = self._get_existing(CONF_BROWSE_PATHS, [])
+        self._extra_fields: list[str] = self._get_existing(CONF_EXTRA_FIELDS, [])
+        self._mac_addresses: list[str] = self._get_existing(CONF_MAC, [])
+        self._use_wol: bool = self._get_existing(CONF_USE_WOL, True)
+
         errors = {}
 
         if not self._ms:
