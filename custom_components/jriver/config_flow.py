@@ -453,7 +453,7 @@ class JRiverConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> JRiverOptionsFlowHandler:
         """Get the options flow for this handler."""
-        return JRiverOptionsFlowHandler(config_entry)
+        return JRiverOptionsFlowHandler()
 
 
 def _format_rule(r: BrowseRule) -> str:
@@ -463,9 +463,8 @@ def _format_rule(r: BrowseRule) -> str:
 class JRiverOptionsFlowHandler(config_entries.OptionsFlow):
     """Allow reconfiguration of the browse paths."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+    def __init__(self) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
         self._library_fields: list[str] = []
         self._browse_paths: list[BrowsePath] = self._get_existing(CONF_BROWSE_PATHS, [])
         self._extra_fields: list[str] = self._get_existing(CONF_EXTRA_FIELDS, [])
