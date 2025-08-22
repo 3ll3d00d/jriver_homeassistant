@@ -544,9 +544,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
             else:
                 raise ValueError(f"Unknown media id {media_id}")
 
-        if media_type_lower == MediaType.PLAYLIST:
-            await self._media_server.play_playlist(media_id, zone=self._target_zone)
-        elif media_type_lower == "file":
+        if media_type_lower == "file":
             await self._media_server.play_file(media_id, zone=self._target_zone)
         elif media_type_lower in [
             MediaType.ARTIST,
@@ -558,6 +556,7 @@ class JRiverMediaPlayer(MediaServerEntity, MediaPlayerEntity):
             MediaType.IMAGE,
             MediaType.MOVIE,
             MediaType.MUSIC,
+            MediaType.PLAYLIST,
             MediaType.SEASON,
             MediaType.TRACK,
             MediaType.TVSHOW,
